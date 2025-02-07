@@ -1,5 +1,5 @@
 {
-  "name": "Harmonie",
+  "name": "harmonie",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-	"migrate": "drizzle-kit generate && drizzle-kit migrate"
+    "migrate": "drizzle-kit generate && drizzle-kit migrate"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.4",
@@ -20,6 +20,7 @@
     "drizzle-orm": "^0.39.2",
     "eslint": "8.57.0",
     "eslint-config-next": "15.1.5",
+    "flowbite": "^3.1.2",
     "next": "15.1.5",
     "next-auth": "^5.0.0-beta.25",
     "pg": "^8.13.1",
