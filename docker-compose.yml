@@ -1,23 +1,31 @@
 services:
   nextjs:
     container_name: nextjs
-    build: .
+    build:
+      context: .
+      target: dev
+    command: npm run dev
+    environment:
+      - NODE_ENV=development 
+      - WATCHPACK_POLLING=true
     ports:
-      - "3000:3000"
+      - 3000:3000
     depends_on:
       - db
     volumes:
-      - "./bbmp:/app"
+      - ./Harmonie
+      - ./Harmonie/node_modules
+      - ./Harmonie/.next
     restart: unless-stopped
 
   db:
     container_name: db
     image: postgres:13
-    env_file: "./bbmp/.env"
+    env_file: ./Harmonie/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - 5432:5432
 
 volumes:
   postgres_data:
