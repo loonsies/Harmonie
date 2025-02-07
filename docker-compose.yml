@@ -13,9 +13,9 @@ services:
     depends_on:
       - db
     volumes:
-      - ./Harmonie
-      - ./Harmonie/node_modules
-      - ./Harmonie/.next
+      - ./Harmonie:/app
+      - /app/node_modules
+      - /app/.next
     restart: unless-stopped
 
   db:

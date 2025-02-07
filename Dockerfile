@@ -4,8 +4,7 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY ./Harmonie/package*.json ./
-RUN npm ci
-RUN npm migrate
+RUN npm install
 
 FROM base AS dev
 WORKDIR /app
@@ -28,6 +27,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
+RUN npm run migrate
 
 CMD ["node", "server.js"]
 
