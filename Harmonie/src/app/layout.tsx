@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import Provider from "@/components/Provider";
 import NavBar from "@/components/NavBar";
 import { auth } from "@/auth";
+import { SessionProvider } from "next-auth/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,11 +25,14 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <NavBar
-          name={session?.user?.name || ""}
-          image={session?.user?.image || ""}
-        ></NavBar>
-        <Provider>{children}</Provider>
+        <SessionProvider>
+          <NavBar
+            name={session?.user?.name || undefined}
+            image={session?.user?.image || undefined}
+            email={session?.user?.email || undefined}
+          ></NavBar>
+          <Provider>{children}</Provider>
+        </SessionProvider>
       </body>
     </html>
   );

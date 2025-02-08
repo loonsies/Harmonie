@@ -3,16 +3,16 @@ import Credentials from "next-auth/providers/credentials";
 import Auth0 from "next-auth/providers/auth0";
 import Discord from "next-auth/providers/discord";
 import Google from "next-auth/providers/google";
-import { DrizzleAdapter } from "@auth/drizzle-adapter"
-import { db, accounts, sessions, users } from "@/schema"
-import { signInSchema } from "@/utils/zod"
-import { getUserFromDb } from "@/utils/db"
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import { db, accounts, sessions, users } from "@/schema";
+import { signInSchema } from "@/utils/zod";
+import { getUserFromDb } from "@/utils/db";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
-    sessionsTable: sessions
+    sessionsTable: sessions,
   }),
   providers: [
     Credentials({
@@ -28,8 +28,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             return null;
           }
 
-          const { email, password } = await signInSchema.parseAsync(credentials)
-          const user = await getUserFromDb(email, password)
+          const { email, password } = await signInSchema.parseAsync(
+            credentials
+          );
+          const user = await getUserFromDb(email, password);
 
           if (user) {
             return {
@@ -66,7 +68,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return true;
     },
     async redirect({ baseUrl }) {
-      return `${baseUrl}/protected`;
+      return `${baseUrl}`;
     },
     async session({ session, token }) {
       if (session.user?.name) session.user.name = token.name;
