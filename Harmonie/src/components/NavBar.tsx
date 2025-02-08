@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Avatar,
   CustomFlowbiteTheme,
@@ -24,6 +23,7 @@ type NavBarProps = {
   image?: string;
   email?: string;
 };
+import { usePathname } from "next/navigation";
 
 const customTheme: CustomFlowbiteTheme = {
   navbar: {
@@ -39,6 +39,11 @@ export default function NavBar({ name, image, email }: NavBarProps) {
   const { data: session } = useSession();
   const isAuthenticated = !!session;
   const { mode, toggleMode } = useThemeMode();
+  const currentPath = usePathname();
+
+  const isActive = (path: string) => {
+    return currentPath === path;
+  };
 
   return (
     <Flowbite theme={{ theme: customTheme }}>
@@ -81,14 +86,14 @@ export default function NavBar({ name, image, email }: NavBarProps) {
         </div>
 
         <Navbar.Collapse>
-          <Navbar.Link href="/">
+          <Navbar.Link href="/" active={isActive("/")}>
             <FlowbiteIcons size={16}>
               <Home className="inline-block md:hidden" />
             </FlowbiteIcons>
             <span className="ml-2">Home</span>
           </Navbar.Link>
           {isAuthenticated && (
-            <Navbar.Link href="/user/manage">
+            <Navbar.Link href="/user/manage" active={isActive("/user/manage")}>
               <FlowbiteIcons size={16}>
                 <Archive className="inline-block md:hidden" />
               </FlowbiteIcons>
@@ -97,14 +102,19 @@ export default function NavBar({ name, image, email }: NavBarProps) {
           )}
           {!isAuthenticated && (
             <>
-              <Navbar.Link href="/auth/signin">
+              <Navbar.Link
+                href="/auth/signin"
+                active={isActive("/auth/signin")}
+              >
                 <FlowbiteIcons size={16}>
                   <Lock className="inline-block md:hidden" />
                 </FlowbiteIcons>
                 <span className="ml-2">Log In</span>
               </Navbar.Link>
-              <Navbar.Link href="/auth/register">
-                {" "}
+              <Navbar.Link
+                href="/auth/register"
+                active={isActive("/auth/register")}
+              >
                 <FlowbiteIcons size={16}>
                   <FilePen className="inline-block md:hidden" />
                 </FlowbiteIcons>
@@ -112,7 +122,10 @@ export default function NavBar({ name, image, email }: NavBarProps) {
               </Navbar.Link>
             </>
           )}
-          <Navbar.Link className="block cursor-pointer" onClick={toggleMode}>
+          <Navbar.Link
+            className="md:mr-4 block cursor-pointer"
+            onClick={toggleMode}
+          >
             <FlowbiteIcons size={16}>
               {mode == "dark" ? (
                 <Sun className="inline-block" />
@@ -120,7 +133,7 @@ export default function NavBar({ name, image, email }: NavBarProps) {
                 <Moon className="inline-block" />
               )}
             </FlowbiteIcons>
-            <span className="ml-2 md:hidden">Dark mode</span>
+            <span className="md:hidden ml-2">Dark mode</span>
           </Navbar.Link>
         </Navbar.Collapse>
       </Navbar>
