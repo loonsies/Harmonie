@@ -11,9 +11,5 @@ import LogoutButton from "@/components/buttons/LogoutButton";
 export default async function Home() {
   const session = await auth();
 
-  if (session) {
-    console.log(session);
-  }
-
   return <main className=""></main>;
 }

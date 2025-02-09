@@ -1,8 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Auth0 from "next-auth/providers/auth0";
 import Discord from "next-auth/providers/discord";
-import Google from "next-auth/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db, accounts, sessions, users } from "@/schema";
 import { signInSchema } from "@/utils/zod";
@@ -55,10 +53,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       clientSecret: process.env.AUTH_DISCORD_SECRET,
     }),
   ],
-  pages: {
-    signIn: "/auth/signin",
-    signOut: "/auth/signout",
-  },
   session: { strategy: "jwt" },
   callbacks: {
     async signIn(userDetail) {
