@@ -4,15 +4,18 @@ from psycopg2 import sql
 from bs4 import BeautifulSoup
 import re
 import uuid
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 URL = "https://songs.bardmusicplayer.com/?sort=0"
 
 DB_CONFIG = {
-    "dbname": "harmonie",
-    "user": "postgres",
-    "password": "example",
-    "host": "127.0.0.1",
-    "port": "5432"
+    "host": os.getenv("SCRAPPER_DB_HOST"),
+    "port": os.getenv("SCRAPPER_DB_PORT"),
+    "dbname": os.getenv("SCRAPPER_DB_NAME"),
+    "user": os.getenv("SCRAPPER_DB_USER"),
+    "password": os.getenv("SCRAPPER_DB_PASSWORD"),
 }
 
 def get_user_id_by_name(name):
