@@ -34,7 +34,7 @@ export default function NavLinks({ isAuthenticated }: NavLinksProps) {
           <Navbar.Link
             as={Link}
             href="/auth/login"
-            active={isActive("/auth/signin")}
+            active={isActive("/auth/login")}
           >
             <Lock className="inline-block md:hidden" />
             <span className="ml-2">Log In</span>
