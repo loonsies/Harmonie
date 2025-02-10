@@ -1,4 +1,4 @@
-import LogoutButton from "@/components/buttons/LogoutButton";
+import LogoutButton from "@/components/buttons/logoutButton";
 import { auth } from "@/auth";
 
 export default async function Protected() {

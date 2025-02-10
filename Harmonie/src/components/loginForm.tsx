@@ -1,6 +1,5 @@
 "use client";
 
-import CryptoJS from "crypto-js";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 
@@ -12,7 +11,7 @@ type LoginFormProps = {
 const handleSubmitForm = (data: { email: string; password: string }) => {
   signIn("credentials", {
     email: data.email,
-    password: CryptoJS.MD5(data.password),
+    password: data.password,
   });
 };
 

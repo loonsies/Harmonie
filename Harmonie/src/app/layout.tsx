@@ -1,8 +1,8 @@
-import "@/app/globals.css";
+import "@/styles/globals.css";
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
-import Provider from "@/components/Provider";
-import NavBar from "@/components/NavBar/NavBar";
+import Provider from "@/components/provider";
+import NavBar from "@/components/navBar/navBar";
 import { SessionProvider } from "next-auth/react";
 
 const inter = Inter({ subsets: ["latin"] });

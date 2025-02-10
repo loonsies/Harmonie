@@ -9,10 +9,10 @@ import {
   NavbarToggle,
   NavbarCollapse,
 } from "flowbite-react";
-import ThemeToggle from "@/components/NavBar/ThemeToggle";
-import NavLinks from "@/components/NavBar/NavLinks";
+import ThemeToggle from "@/components/navBar/themeToggle";
+import NavLinks from "@/components/navBar/navLinks";
 import { auth } from "@/auth";
-import UserDropdown from "./UserDropdown";
+import UserDropdown from "./userDropdown";
 
 const customTheme: CustomFlowbiteTheme = {
   navbar: {

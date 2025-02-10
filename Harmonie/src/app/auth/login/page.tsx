@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { getProviders } from "next-auth/react";
-import Divider from "@/components/Divider";
-import LoginForm from "@/components/LoginForm";
-import LoginButton from "@/components/buttons/LoginButton";
+import Divider from "@/components/divider";
+import LoginForm from "@/components/loginForm";
+import LoginButton from "@/components/buttons/loginButton";
 import { ClientSafeProvider } from "next-auth/lib/client";
 import Metadata from "@/utils/metadata";
 

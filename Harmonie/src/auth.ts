@@ -22,7 +22,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         try {
-          if (!credentials) {
+          if (!credentials || !credentials.email || !credentials.password) {
             return null;
           }
 
