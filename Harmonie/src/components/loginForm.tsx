@@ -2,32 +2,19 @@
 
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import DiscordButton from "@/components/buttons/discordButton";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/utils/cn";
 import React from "react";
 import { useRouter } from "next/navigation";
+import { TypeOf } from "zod";
+import { loginSchema } from "@/app/schemas/loginSchema";
 
-type LoginFormProps = {
-  email: string;
-  password: string;
-};
-
-const handleSubmitForm = (data: { email: string; password: string }) => {
-  signIn("credentials", {
-    email: data.email,
-    password: data.password,
-  });
-};
+type LoginFormProps = TypeOf<typeof loginSchema>;
 
 export function LoginForm({
   className,
@@ -40,13 +27,15 @@ export function LoginForm({
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormProps>({
-    mode: "onBlur",
-    reValidateMode: "onChange",
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    resolver: zodResolver(loginSchema),
   });
+
+  const handleSubmitForm = (data: LoginFormProps) => {
+    signIn("credentials", {
+      email: data.email,
+      password: data.password,
+    });
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -60,24 +49,14 @@ export function LoginForm({
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
-                  {...register("email", {
-                    required: "Email is required",
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email address",
-                    },
-                  })}
+                  {...register("email")}
                   id="email"
-                  name="email"
-                  type="email"
                   autoComplete="email"
                   placeholder="mail@example.com"
-                  required
                 />
-
-                {errors.email?.message && (
+                {errors.email && (
                   <span className="text-red-500 text-xs">
-                    {errors.email?.message}
+                    {errors.email.message}
                   </span>
                 )}
               </div>
@@ -92,17 +71,15 @@ export function LoginForm({
                   </a>
                 </div>
                 <Input
-                  {...register("password", {
-                    required: "Password is required",
-                  })}
+                  {...register("password")}
                   id="password"
-                  name="password"
                   type="password"
-                  required
                 />
-                <span className="text-red-500 text-xs">
-                  {errors.password?.message}
-                </span>
+                {errors.password && (
+                  <span className="text-red-500 text-xs">
+                    {errors.password.message}
+                  </span>
+                )}
               </div>
               <Button type="submit" className="w-full">
                 Login
@@ -123,12 +100,12 @@ export function LoginForm({
               </span>
             </div>
             <div className="flex flex-col gap-4">
-              <DiscordButton></DiscordButton>
+              <DiscordButton />
             </div>
           </form>
         </CardContent>
       </Card>
-      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary  ">
+      <div className="text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
         By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
         and <a href="#">Privacy Policy</a>.
       </div>
