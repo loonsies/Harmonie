@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar, Dropdown, DropdownHeader, DropdownItem } from "flowbite-react";
+import { signOut } from "next-auth/react";
 
 interface UserDropdownProps {
   user?: {
@@ -41,9 +42,9 @@ export default function UserDropdown({ user }: UserDropdownProps) {
         Settings
       </DropdownItem>
       <DropdownItem
-        as={Link}
-        href="/api/auth/signout"
-        className={isActive("/api/auth/signout") ? "font-bold" : ""}
+        onClick={() => {
+          signOut();
+        }}
       >
         Sign out
       </DropdownItem>
