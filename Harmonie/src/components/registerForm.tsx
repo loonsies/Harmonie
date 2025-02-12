@@ -86,9 +86,11 @@ export function RegisterForm({
                   autoComplete="username"
                   required
                 />
-                <span className="text-red-500 text-xs">
-                  {errors.username?.message}
-                </span>
+                {errors.username?.message && (
+                  <span className="text-red-500 text-xs">
+                    {errors.username.message}
+                  </span>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -106,9 +108,11 @@ export function RegisterForm({
                   autoComplete="email"
                   required
                 />
-                <span className="text-red-500 text-xs">
-                  {errors.email?.message}
-                </span>
+                {errors.email?.message && (
+                  <span className="text-red-500 text-xs">
+                    {errors.email?.message}
+                  </span>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
@@ -121,9 +125,11 @@ export function RegisterForm({
                   type="password"
                   required
                 />
-                <span className="text-red-500 text-xs">
-                  {errors.password?.message}
-                </span>
+                {errors.password?.message && (
+                  <span className="text-red-500 text-xs">
+                    {errors.password?.message}
+                  </span>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="confirmPassword">Confirm password</Label>
@@ -136,9 +142,11 @@ export function RegisterForm({
                   type="password"
                   required
                 />
-                <span className="text-red-500 text-xs">
-                  {errors.confirmPassword?.message}
-                </span>
+                {errors.password?.message && (
+                  <span className="text-red-500 text-xs">
+                    {errors.confirmPassword?.message}
+                  </span>
+                )}
               </div>
               <Button type="submit" className="w-full">
                 Register

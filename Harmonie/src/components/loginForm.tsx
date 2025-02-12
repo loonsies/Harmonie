@@ -71,9 +71,12 @@ export function LoginForm({
                   placeholder="mail@example.com"
                   required
                 />
-                <span className="text-red-500 text-xs">
-                  {errors.email?.message}
-                </span>
+
+                {errors.email?.message && (
+                  <span className="text-red-500 text-xs">
+                    {errors.email?.message}
+                  </span>
+                )}
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
