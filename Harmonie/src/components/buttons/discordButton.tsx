@@ -1,11 +1,13 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import { Button } from "@/components/ui/button";
 
 export default function DiscordButton() {
   return (
-    <button
-      className="border border-slate-300 rounded px-5 py-4 flex items-center"
+    <Button
+      variant="outline"
+      className="w-full"
       onClick={() => signIn("discord")}
     >
       <svg
@@ -28,8 +30,7 @@ export default function DiscordButton() {
   c-4.488,0-8.174-3.927-8.174-8.815c0.36-11.684,15.937-11.689,16.348,0C72.478,59.897,68.872,63.824,64.304,63.824z"
         ></path>
       </svg>
-      <div className="px-2"></div>
-      <span>Sign In with Discord</span>
-    </button>
+      <span>Login with Discord</span>
+    </Button>
   );
 }

@@ -2,8 +2,8 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Discord from "next-auth/providers/discord";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { db, accounts, sessions, users } from "@/schema";
-import { signInSchema } from "@/utils/zod";
+import { db, accounts, sessions, users } from "@/app/schema";
+import { loginSchema } from "@/app/schemas/loginSchema";
 import { getUserFromDb } from "@/utils/db";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
@@ -26,9 +26,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             return null;
           }
 
-          const { email, password } = await signInSchema.parseAsync(
-            credentials
-          );
+          const { email, password } = await loginSchema.parseAsync(credentials);
           const user = await getUserFromDb(email, password);
 
           if (user) {

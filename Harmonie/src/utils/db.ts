@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eq, isNotNull, isNull } from "drizzle-orm";
-import { songs, users } from "@/schema";
+import { songs, users } from "@/app/schema";
 import type { InferSelectModel } from "drizzle-orm";
 import { verifyPassword } from "@/utils/password";
 import { Song } from "@/data/types/song";

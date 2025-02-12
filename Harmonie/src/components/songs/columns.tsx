@@ -52,6 +52,7 @@ export const columns: ColumnDef<Song>[] = [
         </div>
       );
     },
+    filterFn: "arrIncludesSome",
   },
   {
     accessorKey: "dateUploaded",

@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { registerUser } from "@/app/api/auth/register";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import DiscordButton from "@/components/buttons/discordButton";
@@ -15,28 +15,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/utils/cn";
 import React from "react";
+import { useRouter } from "next/navigation";
 
-type LoginFormProps = {
+type RegisterFormProps = {
+  username: string;
   email: string;
   password: string;
+  confirmPassword: string;
 };
 
-const handleSubmitForm = (data: { email: string; password: string }) => {
-  signIn("credentials", {
-    email: data.email,
-    password: data.password,
-  });
-};
-
-export function LoginForm({
+export function RegisterForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div"> & { className?: string }) {
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormProps>({
+  } = useForm<RegisterFormProps>({
     mode: "onBlur",
     reValidateMode: "onChange",
     defaultValues: {
@@ -45,15 +43,53 @@ export function LoginForm({
     },
   });
 
+  const handleSubmitForm = async (data: {
+    username: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+  }) => {
+    const user = await registerUser({
+      username: data.username,
+      email: data.email,
+      password: data.password,
+      confirmPassword: data.confirmPassword,
+    });
+
+    if (user) {
+      router.push("/auth/login");
+    }
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardTitle className="text-xl">Create a new account</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
             <div className="grid gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  {...register("username", {
+                    required: "Username is required",
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message: "Invalid username",
+                    },
+                  })}
+                  id="username"
+                  name="username"
+                  type="username"
+                  autoComplete="username"
+                  required
+                />
+                <span className="text-red-500 text-xs">
+                  {errors.username?.message}
+                </span>
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -68,7 +104,6 @@ export function LoginForm({
                   name="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="mail@example.com"
                   required
                 />
                 <span className="text-red-500 text-xs">
@@ -76,15 +111,7 @@ export function LoginForm({
                 </span>
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   {...register("password", {
                     required: "Password is required",
@@ -98,23 +125,24 @@ export function LoginForm({
                   {errors.password?.message}
                 </span>
               </div>
-              <Button type="submit" className="w-full">
-                Login
-              </Button>
-              <div className="text-center text-sm">
-                Don&apos;t have an account?{" "}
-                <a href="#" className="underline underline-offset-4">
-                  Sign up
-                </a>
+              <div className="grid gap-2">
+                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <Input
+                  {...register("confirmPassword", {
+                    required: "Confirmation password is required",
+                  })}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                />
+                <span className="text-red-500 text-xs">
+                  {errors.confirmPassword?.message}
+                </span>
               </div>
-            </div>
-            <div className="relative my-6 text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-              <span className="relative z-10 bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-            <div className="flex flex-col gap-4">
-              <DiscordButton></DiscordButton>
+              <Button type="submit" className="w-full">
+                Register
+              </Button>
             </div>
           </form>
         </CardContent>
