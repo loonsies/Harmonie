@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/utils/cn";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 type LoginFormProps = {
   email: string;
@@ -32,6 +33,8 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div"> & { className?: string }) {
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -106,7 +109,10 @@ export function LoginForm({
               </Button>
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <a href="#" className="underline underline-offset-4">
+                <a
+                  onClick={() => router.push("/auth/register")}
+                  className="underline underline-offset-4 cursor-pointer"
+                >
                   Sign up
                 </a>
               </div>
