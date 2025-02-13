@@ -1,10 +1,9 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import DiscordButton from "@/components/buttons/discordButton";
+import DiscordButton from "@/components/discordButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +12,9 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { TypeOf } from "zod";
 import { loginSchema } from "@/app/schemas/loginSchema";
+import { useToast } from "@/hooks/use-toast";
+import { signIn } from "next-auth/react";
+import { getAuthErrorMessage } from "@/utils/authError";
 
 type LoginFormProps = TypeOf<typeof loginSchema>;
 
@@ -21,20 +23,40 @@ export function LoginForm({
   ...props
 }: React.ComponentPropsWithoutRef<"div"> & { className?: string }) {
   const router = useRouter();
+  const { toast } = useToast();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormProps>({
     resolver: zodResolver(loginSchema),
   });
 
-  const handleSubmitForm = (data: LoginFormProps) => {
-    signIn("credentials", {
-      email: data.email,
-      password: data.password,
-    });
+  const handleSubmitForm = async (data: LoginFormProps) => {
+    try {
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+      if (result?.error) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: getAuthErrorMessage(result.error),
+        });
+        return;
+      }
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: getAuthErrorMessage(undefined),
+      });
+    }
   };
 
   return (
@@ -81,8 +103,8 @@ export function LoginForm({
                   </span>
                 )}
               </div>
-              <Button type="submit" className="w-full">
-                Login
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Signing in..." : "Login"}
               </Button>
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}

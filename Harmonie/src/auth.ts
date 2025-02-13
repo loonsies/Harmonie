@@ -52,6 +52,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     }),
   ],
   session: { strategy: "jwt" },
+  pages: {
+    signIn: "/auth/login",
+    error: "/auth/error",
+  },
   callbacks: {
     async signIn(userDetail) {
       if (Object.keys(userDetail).length === 0) {
