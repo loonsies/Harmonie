@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Discord from "next-auth/providers/discord";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { db, accounts, sessions, users } from "@/app/schema";
+import { db, accounts, sessions, users } from "@/schema";
 import { loginSchema } from "@/app/schemas/loginSchema";
 import { getUserFromDb } from "@/utils/db";
 
@@ -57,17 +57,19 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     error: "/auth/error",
   },
   callbacks: {
-    async signIn(userDetail) {
-      if (Object.keys(userDetail).length === 0) {
-        return false;
-      }
-      return true;
-    },
     async redirect({ baseUrl }) {
       return `${baseUrl}`;
     },
-    async session({ session, token }) {
-      if (session.user?.name) session.user.name = token.name;
+    async session({ session, trigger, token, newSession }) {
+      if (trigger === "update" && newSession?.name) {
+        session.user.name = newSession.name;
+      }
+      if (session.user?.name) {
+        session.user.name = token.name;
+      }
+      if (token.sub) {
+        session.user.id = token.sub;
+      }
       return session;
     },
     async jwt({ token, user }) {

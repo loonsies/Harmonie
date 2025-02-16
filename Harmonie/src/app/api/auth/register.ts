@@ -1,8 +1,8 @@
 "use server";
 
-import { db, users } from "@/app/schema";
+import { db, users } from "@/schema";
 import { registerSchema } from "@/app/schemas/registerSchema";
-import { saltAndHashPassword } from "@/utils/password";
+import { hashPassword } from "@/utils/password";
 
 export async function registerUser({
   username,
@@ -34,13 +34,14 @@ export async function registerUser({
       throw new Error("Confirmation password is different from password");
     }
 
-    const hashedPassword = saltAndHashPassword(validatedPassword);
+    const hashedPassword = hashPassword(validatedPassword);
     const newUser = await db
       .insert(users)
       .values({
         name: validatedName,
         email: validatedEmail,
         password: hashedPassword,
+        image: "default.png",
       })
       .returning();
 

@@ -25,7 +25,7 @@ export default function UserDropdown({ user }: UserDropdownProps) {
         <Avatar
           className="mr-2 md:mr-0 hover:opacity-80"
           alt="User settings"
-          img={user?.image ?? ""}
+          img={`/user/${user?.name}/avatar`}
           rounded
         />
       }

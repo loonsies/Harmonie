@@ -15,11 +15,12 @@ services:
       - ./Harmonie:/app
       - /app/node_modules
       - /app/.next
+      - ./Harmonie/public:/app/public
     restart: unless-stopped
 
   db:
     container_name: db
-    image: postgres:13
+    image: postgres:latest
     env_file: ./Harmonie/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -28,3 +29,4 @@ services:
 
 volumes:
   postgres_data:
+  public:

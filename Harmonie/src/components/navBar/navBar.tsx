@@ -38,7 +38,7 @@ export default async function NavBar() {
       <Navbar fluid>
         <NavbarBrand as={Link} href="/">
           <img
-            src="/images/icons/logo.svg"
+            src="/icons/logo.svg"
             className="mr-2 h-6 sm:h-9"
             alt="Harmonie Logo"
           />

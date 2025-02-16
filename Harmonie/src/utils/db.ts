@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eq, isNotNull, isNull } from "drizzle-orm";
-import { songs, users } from "@/app/schema";
+import { songs, users } from "@/schema";
 import type { InferSelectModel } from "drizzle-orm";
 import { verifyPassword } from "@/utils/password";
 import { Song } from "@/data/types/song";
@@ -33,6 +33,16 @@ export async function getUserFromDb(
   return null;
 }
 
+export async function getUserFromId(id: string): Promise<User | null> {
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1)
+    .execute();
+  return result[0] ?? null;
+}
+
 export async function getSongs(source: string): Promise<Song[]> {
   if (source == "bmp") {
     const result = await db
@@ -62,4 +72,17 @@ export async function getSongs(source: string): Promise<Song[]> {
       .execute();
   }
   return [];
+}
+
+export async function getUserAvatarByUsername(
+  username: string
+): Promise<string | null> {
+  const result = await db
+    .select({ avatar: users.image })
+    .from(users)
+    .where(eq(users.name, username))
+    .limit(1)
+    .execute();
+
+  return result[0]?.avatar ?? null;
 }
