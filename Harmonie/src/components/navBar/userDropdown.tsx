@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar, Dropdown, DropdownHeader, DropdownItem } from "flowbite-react";
 import { signOut } from "next-auth/react";
+import { useUser } from "@/contexts/UserContext";
 
 interface UserDropdownProps {
   user?: {
@@ -15,6 +16,7 @@ interface UserDropdownProps {
 
 export default function UserDropdown({ user }: UserDropdownProps) {
   const currentPath = usePathname();
+  const { userData } = useUser();
 
   const isActive = (path: string) => currentPath === path;
   return (
@@ -25,14 +27,20 @@ export default function UserDropdown({ user }: UserDropdownProps) {
         <Avatar
           className="mr-2 md:mr-0 hover:opacity-80"
           alt="User settings"
-          img={`/user/${user?.name}/avatar`}
+          img={`/user/${userData.name || user?.name}/avatar?v=${
+            userData.avatarKey
+          }`}
           rounded
         />
       }
     >
       <DropdownHeader>
-        <span className="block text-sm font-semibold">{user?.name}</span>
-        <span className="block truncate text-sm">{user?.email}</span>
+        <span className="block text-sm font-semibold">
+          {userData.name || user?.name}
+        </span>
+        <span className="block truncate text-sm">
+          {userData.email || user?.email}
+        </span>
       </DropdownHeader>
       <DropdownItem
         as={Link}

@@ -36,7 +36,11 @@ export const tags = [
     value: "nonet",
   },
   {
-    label: "Dectet",
-    value: "dectet",
+    label: "Decet",
+    value: "decet",
+  },
+  {
+    label: "Unknown",
+    value: "unknown",
   },
 ];

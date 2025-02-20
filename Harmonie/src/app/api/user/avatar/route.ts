@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { auth, unstable_update } from "@/auth";
 import { db, users } from "@/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -50,6 +50,12 @@ export async function POST(request: Request) {
       .set({ image: fileName })
       .where(eq(users.id, session.user.id));
 
+    await unstable_update({
+      user: {
+        ...session.user,
+        image: fileName,
+      },
+    });
     return new NextResponse("Avatar updated", { status: 200 });
   } catch (error) {
     console.error("Avatar upload error:", error);
@@ -67,7 +73,11 @@ export async function DELETE(request: Request) {
     const user = await getUserFromId(session.user.id);
 
     // Delete old avatar file if it exists and isn't default
-    if (user?.image && user.image !== "default.png") {
+    if (
+      user?.image &&
+      user.image !== "default.png" &&
+      user.image.startsWith("http")
+    ) {
       try {
         await unlink(path.join(process.cwd(), "public", "avatar", user.image));
       } catch (error) {
@@ -81,6 +91,12 @@ export async function DELETE(request: Request) {
       .set({ image: "default.png" })
       .where(eq(users.id, session.user.id));
 
+    await unstable_update({
+      user: {
+        ...session.user,
+        image: "default.png",
+      },
+    });
     return new NextResponse("Avatar removed", { status: 200 });
   } catch (error) {
     console.error("Avatar removal error:", error);

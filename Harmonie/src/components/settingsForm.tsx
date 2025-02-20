@@ -1,5 +1,3 @@
-// TODO: No client side update (refresh session) >:(
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -9,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/utils/cn";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -17,36 +15,42 @@ import { userSettingsSchema } from "@/app/schemas/userSettingsSchema";
 import type { TypeOf } from "zod";
 import { Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useUser } from "@/contexts/UserContext";
 
 type SettingsFormProps = TypeOf<typeof userSettingsSchema>;
 
 export function SettingsForm({
-  user,
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div"> & {
   className?: string;
-  user: {
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-  };
 }) {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
-  const { update } = useSession();
+  const { data: session } = useSession();
+  const { userData, updateAvatar, updateUserData } = useUser();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    reset,
   } = useForm<SettingsFormProps>({
     resolver: zodResolver(userSettingsSchema),
     defaultValues: {
-      username: user.name || "",
-      email: user.email || "",
+      username: "",
+      email: "",
     },
   });
+
+  useEffect(() => {
+    if (session?.user) {
+      reset({
+        username: session.user.name || "",
+        email: session.user.email || "",
+      });
+    }
+  }, [session, reset]);
 
   const handleSubmitForm = async (data: SettingsFormProps) => {
     try {
@@ -62,6 +66,12 @@ export function SettingsForm({
         throw new Error(await response.text());
       }
 
+      // Update the user data in context
+      updateUserData({
+        name: data.username,
+        email: data.email,
+      });
+
       toast({
         title: "Success",
         description: "Your settings have been updated.",
@@ -73,8 +83,6 @@ export function SettingsForm({
         description:
           error instanceof Error ? error.message : "Failed to update settings.",
       });
-    } finally {
-      await update();
     }
   };
 
@@ -89,18 +97,18 @@ export function SettingsForm({
         throw new Error(await response.text());
       }
 
+      // Update session user image
+      if (session?.user) {
+        session.user.image = "default.png";
+      }
+
+      // Update avatar in navbar
+      updateAvatar();
+
       toast({
         title: "Success",
         description: "Profile picture removed.",
       });
-
-      // Force refresh the avatar
-      const avatar = document.querySelector(
-        `img[alt="Profile picture"]`
-      ) as HTMLImageElement;
-      if (avatar) {
-        avatar.src = `${avatar.src}?${new Date().getTime()}`;
-      }
     } catch (error) {
       toast({
         variant: "destructive",
@@ -112,7 +120,6 @@ export function SettingsForm({
       });
     } finally {
       setIsUploading(false);
-      await update();
     }
   };
 
@@ -153,18 +160,18 @@ export function SettingsForm({
         throw new Error(await response.text());
       }
 
+      // Update session user image
+      if (session?.user) {
+        session.user.image = `/user/${session.user.name}/avatar`;
+      }
+
+      // Update avatar in navbar
+      updateAvatar();
+
       toast({
         title: "Success",
         description: "Profile picture updated.",
       });
-
-      // Force refresh the avatar
-      const avatar = document.querySelector(
-        `img[alt="Profile picture"]`
-      ) as HTMLImageElement;
-      if (avatar) {
-        avatar.src = `${avatar.src}?${new Date().getTime()}`;
-      }
     } catch (error) {
       toast({
         variant: "destructive",
@@ -174,7 +181,6 @@ export function SettingsForm({
       });
     } finally {
       setIsUploading(false);
-      await update();
     }
   };
 
@@ -189,7 +195,7 @@ export function SettingsForm({
             <div className="flex items-center gap-x-3">
               <Avatar className="h-24 w-24">
                 <AvatarImage
-                  src={`/user/${user?.name}/avatar`}
+                  src={`/user/${session?.user?.name}/avatar?v=${userData.avatarKey}`}
                   alt="Profile picture"
                 />
               </Avatar>
@@ -208,7 +214,10 @@ export function SettingsForm({
                     type="button"
                     variant="destructive"
                     size="icon"
-                    disabled={!user.image || user.image === "default.png"}
+                    disabled={
+                      !session?.user?.image ||
+                      session?.user?.image === "default.png"
+                    }
                     onClick={handleRemoveAvatar}
                     title="Remove profile picture"
                   >

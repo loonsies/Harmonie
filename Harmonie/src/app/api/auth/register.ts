@@ -29,8 +29,6 @@ export async function registerUser({
     });
 
     if (validatedPassword != validatedConfirmPassword) {
-      console.log(validatedPassword);
-      console.log(validatedConfirmPassword);
       throw new Error("Confirmation password is different from password");
     }
 
@@ -47,7 +45,6 @@ export async function registerUser({
 
     return newUser;
   } catch (error) {
-    console.log(error);
     throw new Error(`Registration failed: ${error}`);
   }
 }

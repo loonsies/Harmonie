@@ -4,7 +4,8 @@ import { Inter } from "next/font/google";
 import Provider from "@/components/provider";
 import NavBar from "@/components/navBar/navBar";
 import { SessionProvider } from "next-auth/react";
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
+import { UserProvider } from "@/contexts/UserContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,9 +26,11 @@ export default async function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <SessionProvider>
-          <NavBar></NavBar>
-          <Provider>{children}</Provider>
-          <Toaster />
+          <UserProvider>
+            <NavBar></NavBar>
+            <Provider>{children}</Provider>
+            <Toaster />
+          </UserProvider>
         </SessionProvider>
       </body>
     </html>

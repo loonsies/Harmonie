@@ -48,7 +48,7 @@ export function TableSearch<TData>({ table }: TableSearchProps<TData>) {
             .filter(
               (column) =>
                 column.getCanFilter() &&
-                !["tags", "dateUploaded"].includes(column.id)
+                !["tags", "dateUploaded", "origin"].includes(column.id)
             )
             .map((column) => (
               <SelectItem key={column.id} value={column.id}>

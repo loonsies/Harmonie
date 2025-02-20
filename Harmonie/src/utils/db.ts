@@ -43,6 +43,16 @@ export async function getUserFromId(id: string): Promise<User | null> {
   return result[0] ?? null;
 }
 
+export async function getUserFromName(name: string): Promise<User | null> {
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.name, name))
+    .limit(1)
+    .execute();
+  return result[0] ?? null;
+}
+
 export async function getSongs(source: string): Promise<Song[]> {
   if (source == "bmp") {
     const result = await db

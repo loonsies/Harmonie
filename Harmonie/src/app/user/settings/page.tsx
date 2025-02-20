@@ -12,7 +12,7 @@ export default async function UserSettings() {
   return (
     <main className="max-w-2xl min-h-screen flex flex-col items-center mx-auto p-2 md:p-8">
       <div className="w-full">
-        <SettingsForm user={session.user} />
+        <SettingsForm />
       </div>
     </main>
   );

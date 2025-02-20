@@ -1,9 +1,10 @@
-import { auth } from "@/auth";
-import { getUserFromId } from "@/utils/db";
+import { auth, unstable_update } from "@/auth";
+import { getUserFromId, getUserFromName } from "@/utils/db";
 import { db, users } from "@/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { userSettingsSchema } from "@/app/schemas/userSettingsSchema";
+import { usernameSchema } from "@/app/schemas/usernameSchema";
 import { verifyPassword, hashPassword } from "@/utils/password";
 
 export async function PUT(request: Request) {
@@ -14,10 +15,25 @@ export async function PUT(request: Request) {
     }
 
     const data = await request.json();
-    const validatedData = await userSettingsSchema.parseAsync(data);
+
+    // Determine if this is a username-only update or full settings update
+    const isUsernameOnly = Object.keys(data).length === 1 && "username" in data;
+
+    const validatedData = isUsernameOnly
+      ? await usernameSchema.parseAsync(data)
+      : await userSettingsSchema.parseAsync(data);
+
+    // Check if username is already taken by another user
+    if (validatedData.username) {
+      const existingUser = await getUserFromName(validatedData.username);
+
+      if (existingUser && existingUser.id !== session.user.id) {
+        return new NextResponse("Username already taken", { status: 400 });
+      }
+    }
 
     // Verify current password if trying to change password
-    if (validatedData.newPassword) {
+    if ("newPassword" in validatedData && validatedData.newPassword) {
       const user = await getUserFromId(session.user.id);
 
       if (!user?.password || !validatedData.currentPassword) {
@@ -31,17 +47,25 @@ export async function PUT(request: Request) {
       }
     }
 
+    // Prepare update data based on what was provided
+    const updateData: Record<string, any> = {};
+    if (validatedData.username) updateData.name = validatedData.username;
+    if ("email" in validatedData && validatedData.email)
+      updateData.email = validatedData.email;
+    if ("newPassword" in validatedData && validatedData.newPassword) {
+      updateData.password = await hashPassword(validatedData.newPassword);
+    }
+
     // Update user data
-    await db
-      .update(users)
-      .set({
-        name: validatedData.username,
-        email: validatedData.email,
-        ...(validatedData.newPassword && {
-          password: await hashPassword(validatedData.newPassword),
-        }),
-      })
-      .where(eq(users.id, session.user.id));
+    await db.update(users).set(updateData).where(eq(users.id, session.user.id));
+
+    await unstable_update({
+      user: {
+        ...session.user,
+        ...(validatedData.username && { name: validatedData.username }),
+        ...("email" in validatedData && { email: validatedData.email }),
+      },
+    });
 
     return new NextResponse("Settings updated", { status: 200 });
   } catch (error) {

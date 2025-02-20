@@ -2,9 +2,11 @@ import { object, string } from "zod";
 
 export const userSettingsSchema = object({
   username: string()
-    .min(1, "Username is required")
-    .regex(/^[a-zA-Z0-9]+$/, "Username can only contain letters and numbers"),
-  email: string().min(1, "Email is required").email("Invalid email"),
+    .min(3, "Username must be at least 3 characters")
+    .regex(/^[a-zA-Z0-9]+$/, "Username can only contain letters and numbers")
+    .max(32, "Username must be less than 32 characters")
+    .optional(),
+  email: string().min(1, "Email is required").email("Invalid email").optional(),
   currentPassword: string()
     .optional()
     .refine((val) => !val || val.length >= 8, {
@@ -39,5 +41,14 @@ export const userSettingsSchema = object({
     {
       message: "Passwords do not match",
       path: ["confirmPassword"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Require at least one field to be present
+      return Object.values(data).some((value) => value !== undefined);
+    },
+    {
+      message: "At least one field must be provided for update",
     }
   );

@@ -11,6 +11,7 @@ import {
   getPaginationRowModel,
   InitialTableState,
   useReactTable,
+  RowSelectionState,
 } from "@tanstack/react-table";
 
 import {
@@ -25,30 +26,55 @@ import {
 import { TablePagination } from "@/components/table/tablePagination";
 import { TableToolbar } from "@/components/table/tableToolbar";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+interface SongTableProps {
+  data: {
+    id: string;
+    title: string;
+    tags: string | null;
+    download: string;
+    source: string;
+    comment: string | null;
+    dateUploaded: Date | null;
+    authorId: string;
+    authorName: string | null;
+  }[];
+  columns: ColumnDef<any>[];
+  showActions: boolean;
 }
 
 const initialState: InitialTableState = { columnVisibility: { origin: false } };
 
-export function SongTable<TData, TValue>({
-  columns,
-  data,
-}: DataTableProps<TData, TValue>) {
+export function SongTable({ data, columns, showActions }: SongTableProps) {
+  const finalColumns = showActions
+    ? columns
+    : columns.filter((col) => col.id !== "actions");
+
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+
+  // Process data to add unknown tag to songs without tags
+  const processedData = React.useMemo(() => {
+    return data.map((song: any) => ({
+      ...song,
+      tags: song.tags?.length ? song.tags : ["unknown"],
+    }));
+  }, [data]);
+
   const table = useReactTable({
-    data,
-    columns,
+    data: processedData,
+    columns: finalColumns,
     initialState,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
     state: {
       columnFilters,
+      rowSelection,
     },
   });
 
@@ -95,7 +121,7 @@ export function SongTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={finalColumns.length}
                   className="h-24 text-center"
                 >
                   No results.

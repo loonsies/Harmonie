@@ -6,7 +6,7 @@ import { db, accounts, sessions, users } from "@/schema";
 import { loginSchema } from "@/app/schemas/loginSchema";
 import { getUserFromDb } from "@/utils/db";
 
-export const { auth, handlers, signIn, signOut } = NextAuth({
+export const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
@@ -49,33 +49,47 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     Discord({
       clientId: process.env.AUTH_DISCORD_ID,
       clientSecret: process.env.AUTH_DISCORD_SECRET,
+      profile(profile) {
+        return {
+          id: profile.id,
+          name: null,
+          email: profile.email,
+          image: profile.image,
+        };
+      },
     }),
   ],
   session: { strategy: "jwt" },
   pages: {
     signIn: "/auth/login",
-    error: "/auth/error",
+    newUser: "/auth/new-user",
   },
   callbacks: {
     async redirect({ baseUrl }) {
       return `${baseUrl}`;
     },
     async session({ session, trigger, token, newSession }) {
-      if (trigger === "update" && newSession?.name) {
-        session.user.name = newSession.name;
+      if (session.user) {
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
+        session.user.image = token.image as string | null;
       }
-      if (session.user?.name) {
-        session.user.name = token.name;
+      if (trigger === "update" && session && session.user) {
+        token.name = session.user.name;
+        token.email = session.user.email;
+        token.image = session.user.image;
       }
       if (token.sub) {
         session.user.id = token.sub;
       }
       return session;
     },
-    async jwt({ token, user }) {
-      let newUser = { ...user } as any;
-      if (newUser.first_name && newUser.last_name)
-        token.name = `${newUser.first_name} ${newUser.last_name}`;
+    async jwt({ token, trigger, session }) {
+      if (trigger === "update" && session?.user) {
+        token.name = session.user.name;
+        token.email = session.user.email;
+        token.image = session.user.image;
+      }
       return token;
     },
   },

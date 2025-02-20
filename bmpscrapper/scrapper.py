@@ -50,14 +50,27 @@ def extract_song_id(download_url):
     return match.group(1) if match else None
 
 def extract_tags(title, comment):
-    tag_keywords = ["solo", "duet", "trio", "quartet", "quintet", "sextet", "septet", "octet", "nonet", "dectet"]
+    tag_map = {
+        1: "solo",
+        2: "duet",
+        3: "trio",
+        4: "quartet",
+        5: "quintet",
+        6: "sextet",
+        7: "septet",
+        8: "octet",
+        9: "nonet",
+        10: "decet"
+    }
     found_tags = set()
     combined_text = f"{title.lower()} {comment.lower()}"
     
-    for tag in tag_keywords:
+    # First check for explicit tags
+    for tag in tag_map.values():
         if tag in combined_text:
             found_tags.add(tag)
     
+    # Handle common variations
     if "duo" in combined_text:
         found_tags.discard("duo")
         found_tags.add("duet")
@@ -65,6 +78,19 @@ def extract_tags(title, comment):
     if "octect" in combined_text:
         found_tags.discard("octect")
         found_tags.add("octet")
+    
+    if "dectet" in combined_text:
+        found_tags.discard("dectet")
+        found_tags.add("decet")
+    
+    # If no tags found, try to extract from track listing
+    if not found_tags and comment:
+        # Match T followed by numbers (T1, T2, etc)
+        track_matches = re.findall(r'T\d+', comment)
+        if track_matches:
+            unique_tracks = len(track_matches)
+            if unique_tracks in tag_map:
+                found_tags.add(tag_map[unique_tracks])
     
     return ", ".join(sorted(found_tags))
 
