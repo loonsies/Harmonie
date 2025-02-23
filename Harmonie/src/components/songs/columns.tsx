@@ -4,12 +4,23 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Song } from "@/data/types/song";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2, Star } from "lucide-react";
 import { tags } from "@/data/tags";
 import { Button } from "@/components/ui/button";
 import { downloadSongs } from "@/utils/downloadSongs";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useSession } from "next-auth/react";
+import { Rating } from "@smastrom/react-rating";
+import "@smastrom/react-rating/style.css";
+
 const getTagLabel = (value: string) => {
   const tag = tags.find((t) => t.value === value);
   return tag ? tag.label : value;
@@ -115,6 +126,103 @@ export const columns: ColumnDef<Song>[] = [
       );
     },
     filterFn: "arrIncludesSome",
+  },
+  {
+    id: "rating",
+    header: "Rating",
+    cell: ({ row }) => {
+      const [isDialogOpen, setIsDialogOpen] = useState(false);
+      const [currentRating, setCurrentRating] = useState(0);
+      const { data: session } = useSession();
+      const songTitle = row.getValue("title") as string;
+      const songId = row.original.id;
+      const [averageRating, setAverageRating] = useState("0.0");
+
+      const handleRatingSubmit = async (newRating: number) => {
+        try {
+          const response = await fetch("/api/ratings/submit", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              songId,
+              rating: newRating,
+            }),
+          });
+
+          if (!response.ok) throw new Error("Failed to submit rating");
+
+          setIsDialogOpen(false);
+          // Fetch the updated average rating
+          const avgResponse = await fetch(
+            `/api/ratings/average?songId=${songId}`
+          );
+          if (!avgResponse.ok)
+            throw new Error("Failed to fetch updated rating");
+          const data = await avgResponse.json();
+          setAverageRating(data.average);
+        } catch (error) {
+          console.error("Failed to submit rating:", error);
+        }
+      };
+
+      useEffect(() => {
+        const fetchAverageRating = async () => {
+          try {
+            const response = await fetch(
+              `/api/ratings/average?songId=${songId}`
+            );
+            if (!response.ok) throw new Error("Failed to fetch rating");
+            const data = await response.json();
+            setAverageRating(data.average);
+          } catch (error) {
+            console.error("Error fetching rating:", error);
+          }
+        };
+
+        fetchAverageRating();
+      }, [songId]);
+
+      return (
+        <>
+          <div className="flex items-center gap-1">
+            {session ? (
+              <button
+                onClick={() => setIsDialogOpen(true)}
+                className="flex items-center gap-1 hover:text-purple-300"
+              >
+                <span className="text-sm">{averageRating}</span>
+                <Star className="h-4 w-4 fill-current" />
+              </button>
+            ) : (
+              <>
+                <span className="text-sm">{averageRating}</span>
+                <Star className="h-4 w-4 fill-current" />
+              </>
+            )}
+          </div>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Rate "{songTitle}"</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center gap-4 py-4">
+                <Rating
+                  style={{ maxWidth: 250 }}
+                  value={currentRating}
+                  onChange={(newRating: number) => {
+                    setCurrentRating(newRating);
+                    handleRatingSubmit(newRating);
+                  }}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </>
+      );
+    },
   },
   {
     accessorKey: "dateUploaded",

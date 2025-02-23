@@ -27,5 +27,17 @@ services:
     ports:
       - 5432:5432
 
+  bmpscrapper:
+    container_name: bmpscrapper
+    build:
+      context: ./bmpscrapper
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    command: crond -f -d 8
+
 volumes:
   postgres_data:
