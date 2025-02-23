@@ -3,6 +3,7 @@ import { columns } from "@/components/songs/columns";
 import { db, users, songs } from "@/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function UserProfile({
   params: { username },
@@ -36,16 +37,22 @@ export default async function UserProfile({
     .where(eq(songs.author, user.id));
 
   return (
-    <div className="container py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">{user.name}</h1>
-        {user.email && <p className="text-muted-foreground">{user.email}</p>}
-      </div>
+    <main className="max-w-7xl mx-auto px-4 py-8">
+      <div className="space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>{user.name}</CardTitle>
+            {user.email && (
+              <p className="text-muted-foreground">{user.email}</p>
+            )}
+          </CardHeader>
+        </Card>
 
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Songs</h2>
-        <SongTable data={userSongs} columns={columns} showActions={false} />
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Songs</h2>
+          <SongTable data={userSongs} columns={columns} showActions={false} />
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

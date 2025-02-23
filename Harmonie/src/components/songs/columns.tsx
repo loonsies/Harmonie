@@ -9,7 +9,7 @@ import { tags } from "@/data/tags";
 import { Button } from "@/components/ui/button";
 import { downloadSongs } from "@/utils/downloadSongs";
 import { useToast } from "@/hooks/use-toast";
-
+import { useRouter } from "next/navigation";
 const getTagLabel = (value: string) => {
   const tag = tags.find((t) => t.value === value);
   return tag ? tag.label : value;
@@ -63,6 +63,28 @@ export const columns: ColumnDef<Song>[] = [
   {
     accessorKey: "author",
     header: "Author",
+    cell: ({ row }) => {
+      const origin = row.getValue("origin") as string;
+      const author = row.original.authorName;
+      const router = useRouter();
+
+      if ((!origin && author) || origin === "harmonie") {
+        return (
+          <a
+            onClick={() => router.push(`/user/${author}`)}
+            className="text-purple-300 hover:underline cursor-pointer"
+          >
+            {author}
+          </a>
+        );
+      }
+
+      if (origin === "bmp") {
+        return <div>{author}</div>;
+      }
+
+      return null;
+    },
   },
   {
     accessorKey: "source",

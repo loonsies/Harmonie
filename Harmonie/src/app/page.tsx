@@ -3,7 +3,9 @@ import { SongTable } from "@/components/songs/table";
 import { columns } from "@/components/songs/columns";
 
 export default async function HomePage() {
-  const data = await getSongs("bmp");
+  const bmpData = await getSongs("bmp");
+  const harmonieData = await getSongs("harmonie");
+  const data = [...bmpData, ...harmonieData];
 
   return (
     <div className="h-screen w-full mx-auto md:px-4 px-1">

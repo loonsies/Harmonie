@@ -5,6 +5,7 @@ import { songs, users } from "@/schema";
 import type { InferSelectModel } from "drizzle-orm";
 import { verifyPassword } from "@/utils/password";
 import { Song } from "@/data/types/song";
+import { sql } from "drizzle-orm";
 
 const connectionString = process.env.AUTH_DRIZZLE_URL || "";
 const queryClient = postgres(connectionString);
@@ -56,30 +57,41 @@ export async function getUserFromName(name: string): Promise<User | null> {
 export async function getSongs(source: string): Promise<Song[]> {
   if (source == "bmp") {
     const result = await db
-      .select()
+      .select({
+        id: songs.id,
+        title: songs.title,
+        download: songs.download,
+        source: songs.source,
+        comment: songs.comment,
+        tags: songs.tags,
+        authorId: songs.author,
+        authorName: songs.bpmAuthor,
+        dateUploaded: songs.dateUploaded,
+        origin: sql<string>`'bmp'`,
+      })
       .from(songs)
-      .where(isNotNull(songs.bmpId))
-      .execute();
+      .where(isNotNull(songs.bmpId));
 
-    return (
-      result?.map((song) => ({
-        id: song.id,
-        title: song.title,
-        download: song.download,
-        source: song.source,
-        comment: song.comment,
-        tags: song.tags,
-        author: song.bpmAuthor,
-        dateUploaded: song.dateUploaded,
-        origin: "bmp",
-      })) ?? []
-    );
+    return result;
   } else if (source == "harmonie") {
     const result = await db
-      .select()
+      .select({
+        id: songs.id,
+        title: songs.title,
+        download: songs.download,
+        source: songs.source,
+        comment: songs.comment,
+        tags: songs.tags,
+        authorId: songs.author,
+        authorName: users.name,
+        dateUploaded: songs.dateUploaded,
+        origin: sql<string>`'harmonie'`,
+      })
       .from(songs)
-      .where(isNull(songs.bmpId))
-      .execute();
+      .leftJoin(users, eq(songs.author, users.id))
+      .where(isNull(songs.bmpId));
+
+    return result;
   }
   return [];
 }

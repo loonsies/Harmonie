@@ -85,12 +85,14 @@ def extract_tags(title, comment):
     
     # If no tags found, try to extract from track listing
     if not found_tags and comment:
-        # Match T followed by numbers (T1, T2, etc)
-        track_matches = re.findall(r'T\d+', comment)
-        if track_matches:
-            unique_tracks = len(track_matches)
-            if unique_tracks in tag_map:
-                found_tags.add(tag_map[unique_tracks])
+        max_track = 0
+        for match in re.finditer(r'T(\d+)(?:[-]T?(\d+))?', comment):
+            start = int(match.group(1))
+            end = int(match.group(2)) if match.group(2) else start
+            max_track = max(max_track, end)
+        
+        if max_track in tag_map:
+            found_tags.add(tag_map[max_track])
     
     return ", ".join(sorted(found_tags))
 

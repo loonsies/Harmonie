@@ -76,7 +76,7 @@ export async function DELETE(request: Request) {
     if (
       user?.image &&
       user.image !== "default.png" &&
-      user.image.startsWith("http")
+      !user.image.startsWith("http")
     ) {
       try {
         await unlink(path.join(process.cwd(), "public", "avatar", user.image));

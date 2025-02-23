@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Navbar } from "flowbite-react";
 import { usePathname } from "next/navigation";
 import { Home, Archive, Lock, FilePen } from "flowbite-react-icons/outline";
+import { Github } from "lucide-react";
 
 type NavLinksProps = {
   isAuthenticated: boolean;
@@ -49,6 +50,14 @@ export default function NavLinks({ isAuthenticated }: NavLinksProps) {
           </Navbar.Link>
         </>
       )}
+      <Navbar.Link
+        as={Link}
+        target="_blank"
+        href="https://github.com/loonsies/harmonie"
+      >
+        <Github className="inline-block md:hidden" />
+        <span className="ml-2">Source Code</span>
+      </Navbar.Link>
     </>
   );
 }
