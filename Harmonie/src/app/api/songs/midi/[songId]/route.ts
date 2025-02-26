@@ -6,16 +6,18 @@ import path from "path";
 
 export async function GET(
   request: Request,
-  { params }: { params: { songId: string } }
+  context: { params: { songId: string } }
 ) {
   try {
+    const { songId } = await context.params;
+
     // Get the song details from the database
     const result = await db
       .select({
         download: songs.download,
       })
       .from(songs)
-      .where(eq(songs.id, params.songId));
+      .where(eq(songs.id, songId));
 
     if (!result.length) {
       return new NextResponse("Song not found", { status: 404 });
@@ -31,6 +33,7 @@ export async function GET(
         headers: {
           "Content-Type": "audio/midi",
           "Content-Disposition": `attachment; filename="${download}"`,
+          "Cache-Control": "public, max-age=31536000", // Cache for 1 year
         },
       });
     } catch (error) {
