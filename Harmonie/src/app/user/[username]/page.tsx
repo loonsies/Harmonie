@@ -5,11 +5,17 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default async function UserProfile({
-  params: { username },
-}: {
-  params: { username: string };
-}) {
+export default async function UserProfile(
+  props: {
+    params: Promise<{ username: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    username
+  } = params;
+
   const user = await db
     .select()
     .from(users)

@@ -6,7 +6,7 @@ import path from "path";
 
 export async function GET(
   request: Request,
-  context: { params: { songId: string } }
+  context: { params: Promise<{ songId: string }> }
 ) {
   try {
     const { songId } = await context.params;
