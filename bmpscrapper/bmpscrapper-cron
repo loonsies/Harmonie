@@ -1,0 +1,1 @@
+0 0,12 * * * python3 /opt/bmpscrapper.py >> /var/log/cron.log 2>&1

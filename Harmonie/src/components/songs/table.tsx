@@ -39,15 +39,19 @@ interface SongTableProps {
     authorName: string | null;
   }[];
   columns: ColumnDef<any>[];
-  showActions: boolean;
+  showManageActions: boolean;
 }
 
 const initialState: InitialTableState = { columnVisibility: { origin: false } };
 
-export function SongTable({ data, columns, showActions }: SongTableProps) {
-  const finalColumns = showActions
+export function SongTable({
+  data,
+  columns,
+  showManageActions,
+}: SongTableProps) {
+  const finalColumns = showManageActions
     ? columns
-    : columns.filter((col) => col.id !== "actions");
+    : columns.filter((col) => col.id !== "manageActions");
 
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []

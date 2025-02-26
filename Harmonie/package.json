@@ -24,6 +24,7 @@
     "@radix-ui/react-toast": "^1.2.6",
     "@smastrom/react-rating": "^1.5.0",
     "@tanstack/react-table": "^8.20.6",
+    "@tonejs/midi": "^2.0.28",
     "@types/node": "^22.5.1",
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",

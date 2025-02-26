@@ -36,8 +36,9 @@ services:
       - db
     environment:
       - PYTHONUNBUFFERED=1
+    env_file:
+      - ./bmpscrapper/.env
     restart: unless-stopped
-    command: crond -f -d 8
 
 volumes:
   postgres_data:

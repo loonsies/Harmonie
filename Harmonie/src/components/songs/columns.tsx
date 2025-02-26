@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Song } from "@/data/types/song";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2, Star } from "lucide-react";
+import { Download, Trash2, Star, Play } from "lucide-react";
 import { tags } from "@/data/tags";
 import { Button } from "@/components/ui/button";
 import { downloadSongs } from "@/utils/downloadSongs";
@@ -34,6 +34,7 @@ export const columns: ColumnDef<Song>[] = [
         checked={table.getIsAllPageRowsSelected()}
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
+        className="align-middle"
       />
     ),
     cell: ({ row }) => (
@@ -48,24 +49,48 @@ export const columns: ColumnDef<Song>[] = [
     enableHiding: false,
   },
   {
-    id: "download",
-    cell: ({ row }) => (
-      <Button
-        onClick={() => {
-          const song = row.original;
-          downloadSongs([song]);
-        }}
-        variant="ghost"
-        className="h-8 w-8 p-2 align-middle"
-        aria-label="Download song"
-      >
-        <Download className="h-4 w-4" />
-      </Button>
-    ),
+    id: "actions",
+    cell: ({ row }) => {
+      const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+      const song = row.original;
+
+      return (
+        <>
+          <div className="flex gap-1">
+            <Button
+              onClick={() => {
+                const song = row.original;
+                downloadSongs([song]);
+              }}
+              variant="ghost"
+              className="h-8 w-8 p-2 align-middle"
+              aria-label="Download song"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={() => setIsPlayerOpen(true)}
+              variant="ghost"
+              className="h-8 w-8 p-2 align-middle"
+              aria-label="Play song"
+            >
+              <Play className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <Dialog open={isPlayerOpen} onOpenChange={setIsPlayerOpen}>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>{song.title}</DialogTitle>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
+        </>
+      );
+    },
   },
   {
     accessorKey: "title",
-    header: "Title",
   },
   {
     accessorKey: "comment",
@@ -246,7 +271,7 @@ export const columns: ColumnDef<Song>[] = [
     header: "Origin",
   },
   {
-    id: "actions",
+    id: "manageActions",
     cell: ({ row }) => {
       const { toast } = useToast();
 

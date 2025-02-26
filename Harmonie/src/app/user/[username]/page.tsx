@@ -50,7 +50,11 @@ export default async function UserProfile({
 
         <div>
           <h2 className="text-2xl font-bold mb-4">Songs</h2>
-          <SongTable data={userSongs} columns={columns} showActions={false} />
+          <SongTable
+            data={userSongs}
+            columns={columns}
+            showManageActions={false}
+          />
         </div>
       </div>
     </main>

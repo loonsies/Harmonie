@@ -1,21 +1,32 @@
-FROM python:3.13.1-alpine
+FROM python:3.8-slim-buster
 
-WORKDIR /app
+# Install dependencies
+RUN apt-get update && apt-get -y install cron && rm -rf /var/lib/apt/lists/*
 
-# Install cron and required dependencies
-RUN apk add --no-cache dcron
+# Copy and install Python dependencies
+COPY requirements.txt /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Copy .env file
+COPY .env /opt/.env
 
-# Copy the scraper script
-COPY scrapper.py .
+# Copy cron job file
+COPY bmpscrapper-cron /etc/cron.d/bmpscrapper-cron
 
-# Create cron job
-RUN echo "0 */12 * * * python /app/scrapper.py >> /var/log/cron.log 2>&1" > /etc/crontabs/root
+# Set correct permissions for cron file
+RUN chmod 0644 /etc/cron.d/bmpscrapper-cron
 
-# Create log file
+# Apply cron job
+RUN crontab /etc/cron.d/bmpscrapper-cron
+
+# Ensure log file exists
 RUN touch /var/log/cron.log
 
-CMD ["crond", "-f", "-d", "8"] 
+# Set working directory
+WORKDIR /opt
+
+# Copy the Python script
+COPY bmpscrapper.py /opt/bmpscrapper.py
+
+# Start cron
+CMD ["cron", "-f"]

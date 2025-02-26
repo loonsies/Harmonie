@@ -9,7 +9,7 @@ export default async function HomePage() {
 
   return (
     <div className="h-screen w-full mx-auto md:px-4 px-1">
-      <SongTable data={data} columns={columns} showActions={false} />
+      <SongTable data={data} columns={columns} showManageActions={false} />
     </div>
   );
 }

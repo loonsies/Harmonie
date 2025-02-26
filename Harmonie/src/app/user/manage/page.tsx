@@ -51,5 +51,5 @@ async function UserSongs() {
   });
   const songs = await response.json();
 
-  return <SongTable data={songs} columns={columns} showActions={true} />;
+  return <SongTable data={songs} columns={columns} showManageActions={true} />;
 }
