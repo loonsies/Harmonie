@@ -3,8 +3,14 @@ import * as Tone from "tone";
 import { Midi } from "@tonejs/midi";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Play, Pause } from "lucide-react";
+import { Loader2, Play, Pause, Volume2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Track {
   name: string;
@@ -27,6 +33,11 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(() => {
+    const savedVolume = localStorage.getItem('midiPlayerVolume');
+    return savedVolume ? parseInt(savedVolume) : 50;
+  });
+  const [showVolumeTooltip, setShowVolumeTooltip] = useState(false);
   const timeUpdateInterval = useRef<number | null>(null);
 
   const resetPlayback = useCallback(() => {
@@ -151,6 +162,12 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
   }, [songId, origin, download]);
 
   useEffect(() => {
+    if (synth) {
+      synth.volume.value = Tone.gainToDb(volume / 100);
+    }
+  }, [volume, synth]);
+
+  useEffect(() => {
     if (isPlaying) {
       timeUpdateInterval.current = window.setInterval(() => {
         const time = Tone.Transport.seconds;
@@ -221,6 +238,15 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
     }
   };
 
+  const handleVolumeChange = (value: number[]) => {
+    const newVolume = value[0];
+    setVolume(newVolume);
+    localStorage.setItem('midiPlayerVolume', newVolume.toString());
+    if (synth) {
+      synth.volume.value = Tone.gainToDb(newVolume / 100);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center p-4">
@@ -247,29 +273,58 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
         ))}
       </div>
 
-      <div className="space-y-2">
-        <Slider
-          value={[progress]}
-          min={0}
-          max={100}
-          step={0.1}
-          onValueChange={handleSeek}
-          className="w-full"
-        />
-        <div className="flex justify-between text-sm text-gray-500">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
+      <div className="flex items-center gap-4">
+        <Button onClick={togglePlay} variant="outline" className="flex items-center gap-2 w-10 h-10">
+          {isPlaying ? (
+            <Pause className="h-4 w-4" />
+          ) : (
+            <Play className="h-4 w-4" />
+          )}
+        </Button>
+
+        <div className="flex-1 flex items-center gap-2">
+          <span className="text-sm text-gray-500 w-10 text-center">{formatTime(currentTime)}</span>
+          <Slider
+            value={[progress]}
+            min={0}
+            max={100}
+            step={0.1}
+            onValueChange={handleSeek}
+            className="flex-1"
+          />
+          <span className="text-sm text-gray-500 w-10 text-center">{formatTime(duration)}</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Volume2 className="h-4 w-4" />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  onMouseEnter={() => setShowVolumeTooltip(true)}
+                  onMouseLeave={() => setShowVolumeTooltip(false)}
+                  className="relative"
+                >
+                  <Slider
+                    value={[volume]}
+                    min={0}
+                    max={100}
+                    step={1}
+                    onValueChange={(value) => {
+                      handleVolumeChange(value);
+                      setShowVolumeTooltip(true);
+                    }}
+                    className="w-20"
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={15}>
+                <p className="text-sm">{volume}%</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
-
-      <Button onClick={togglePlay} className="flex items-center gap-2">
-        {isPlaying ? (
-          <Pause className="h-4 w-4" />
-        ) : (
-          <Play className="h-4 w-4" />
-        )}
-        {isPlaying ? "Pause" : "Play"}
-      </Button>
     </div>
   );
 }
