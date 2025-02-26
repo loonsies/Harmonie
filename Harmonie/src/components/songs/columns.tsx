@@ -20,6 +20,7 @@ import {
 import { useSession } from "next-auth/react";
 import { Rating } from "@smastrom/react-rating";
 import "@smastrom/react-rating/style.css";
+import { MidiPlayer } from "@/components/songs/MidiPlayer";
 
 const getTagLabel = (value: string) => {
   const tag = tags.find((t) => t.value === value);
@@ -83,6 +84,11 @@ export const columns: ColumnDef<Song>[] = [
               <DialogHeader>
                 <DialogTitle>{song.title}</DialogTitle>
               </DialogHeader>
+              <MidiPlayer
+                songId={song.id}
+                download={song.download}
+                origin={song.origin}
+              />
             </DialogContent>
           </Dialog>
         </>
