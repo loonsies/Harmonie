@@ -252,6 +252,8 @@ export const columns: ColumnDef<Song>[] = [
   {
     accessorKey: "dateUploaded",
     header: "Uploaded",
+    sortingFn: "datetime",
+    sortDescFirst: true,
     cell: ({ row }) => {
       const dateValue = row.getValue("dateUploaded");
       if (!dateValue) return null;

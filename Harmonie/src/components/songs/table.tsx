@@ -12,6 +12,8 @@ import {
   InitialTableState,
   useReactTable,
   RowSelectionState,
+  getSortedRowModel,
+  SortingState,
 } from "@tanstack/react-table";
 
 import {
@@ -57,6 +59,9 @@ export function SongTable({
     []
   );
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "dateUploaded", desc: true },
+  ]);
 
   // Process data to add unknown tag to songs without tags
   const processedData = React.useMemo(() => {
@@ -74,11 +79,14 @@ export function SongTable({
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     state: {
       columnFilters,
       rowSelection,
+      sorting,
     },
   });
 
