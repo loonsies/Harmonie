@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 7474",
     "lint": "next lint",
     "migrate": "drizzle-kit generate && drizzle-kit migrate"
   },

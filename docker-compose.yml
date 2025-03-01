@@ -4,11 +4,11 @@ services:
     build:
       context: /mnt/user/compose/harmonie
       target: dev
-    command: npm run dev
+    command: npm run start
     environment:
       - NODE_ENV=development
     ports:
-      - 3000:3000
+      - 7474:7474
     depends_on:
       - db
     volumes:
