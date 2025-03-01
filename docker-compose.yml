@@ -12,8 +12,6 @@ services:
     depends_on:
       - db
     volumes:
-      - /mnt/user/compose/harmonie/Harmonie:/app
-      - /app/node_modules
       - /mnt/user/harmonie-data:/app/public
     restart: unless-stopped
 
