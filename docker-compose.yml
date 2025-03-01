@@ -6,7 +6,7 @@ services:
       target: dev
     command: npm run build && npm run start
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
     ports:
       - 7474:7474
     depends_on:
