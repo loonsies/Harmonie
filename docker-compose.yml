@@ -21,7 +21,7 @@ services:
   db:
     container_name: harmonie-db
     image: postgres:latest
-    env_file: ./Harmonie/.env
+    env_file: /mnt/user/compose/harmonie/Harmonie/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -37,7 +37,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     env_file:
-      - ./bmpscrapper/.env
+      - /mnt/user/compose/harmonie/bmpscrapper/.env
     restart: unless-stopped
 
 volumes:
