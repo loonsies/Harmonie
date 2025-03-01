@@ -32,10 +32,11 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy the built application
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/public /app/public
 COPY --from=builder --chown=nextjs:nodejs /app/.next /app/.next
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/package.json /app/package.json
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules /app/node_modules
 
 # Set user and command
 USER nextjs
-CMD ["npm", "run", "start"]
+CMD ["npx", "next", "start", "-p", "7474"]
