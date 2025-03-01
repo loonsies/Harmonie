@@ -2,7 +2,7 @@ services:
   nextjs:
     container_name: harmonie-nextjs
     build:
-      context: /mnt/user/compose/harmonie
+      context: .
       target: dev
     command: npm run dev
     environment:
@@ -12,10 +12,10 @@ services:
     depends_on:
       - db
     volumes:
-      - /mnt/user/compose/harmonie/Harmonie:/app
+      - ./Harmonie:/app
       - /app/node_modules
       - /app/.next
-      - /mnt/user/harmonie-data:/app/public
+      - ./Harmonie/public:/app/public
     restart: unless-stopped
 
   db:
@@ -30,7 +30,7 @@ services:
   bmpscrapper:
     container_name: harmonie-bmpscrapper
     build:
-      context: /mnt/user/compose/harmonie/bmpscrapper
+      context: ./bmpscrapper
       dockerfile: Dockerfile
     depends_on:
       - db
