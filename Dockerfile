@@ -1,16 +1,19 @@
 FROM node:22-alpine AS base
 
+# Install dependencies
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY ./Harmonie/package*.json ./
-RUN npm install
+RUN npm install --frozen-lockfile
 
+# Copy source code for development
 FROM base AS dev
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY ./Harmonie/ .
 
+# Build the application
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -18,16 +21,21 @@ COPY ./Harmonie/ .
 ENV NEXT_TELEMETRY_DISABLED 1
 RUN npm run build
 
+# Production runtime
 FROM base AS runner
 WORKDIR /app
+ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED 1
+
+# Create a non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copy the built application
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next  # ✅ Fix: Copy the full .next folder
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
+
+# Set user and command
 USER nextjs
-
-CMD ["node", "server.js"]
-
-
+CMD ["npm", "run", "start"]
