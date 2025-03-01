@@ -1,6 +1,6 @@
 services:
   nextjs:
-    container_name: nextjs
+    container_name: harmonie-nextjs
     build:
       context: .
       target: dev
@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
 
   db:
-    container_name: db
+    container_name: harmonie-db
     image: postgres:latest
     env_file: ./Harmonie/.env
     volumes:
@@ -28,7 +28,7 @@ services:
       - 5432:5432
 
   bmpscrapper:
-    container_name: bmpscrapper
+    container_name: harmonie-bmpscrapper
     build:
       context: ./bmpscrapper
       dockerfile: Dockerfile
