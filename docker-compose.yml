@@ -5,6 +5,8 @@ services:
       context: /mnt/user/compose/harmonie
       target: dev
     command: npm run build && npm run start
+    environment:
+      - NODE_ENV=development
     ports:
       - 7474:7474
     depends_on:

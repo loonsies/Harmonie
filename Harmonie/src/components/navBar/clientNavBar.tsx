@@ -40,6 +40,8 @@ export default function ClientNavBar() {
         <NavbarBrand as={Link} href="/">
           <Image
             src="/icons/logo.svg"
+            width={24}
+            height={48}
             className="mr-2 h-6 sm:h-9"
             alt="Harmonie Logo"
           />
