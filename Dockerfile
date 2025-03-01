@@ -33,7 +33,7 @@ RUN adduser --system --uid 1001 nextjs
 
 # Copy the built application
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next  # ✅ Fix: Copy the full .next folder
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
 
 # Set user and command
