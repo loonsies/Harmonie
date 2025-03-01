@@ -34,7 +34,7 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(() => {
-    const savedVolume = localStorage.getItem('midiPlayerVolume');
+    const savedVolume = localStorage.getItem("midiPlayerVolume");
     return savedVolume ? parseInt(savedVolume) : 50;
   });
   const [showVolumeTooltip, setShowVolumeTooltip] = useState(false);
@@ -115,7 +115,7 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
     }
   };
 
-  const getMidiData = async (): Promise<ArrayBuffer> => {
+  const getMidiData = useCallback(async (): Promise<ArrayBuffer> => {
     if (origin === "bmp" && download) {
       const proxyUrl = `/api/songs/proxy?url=${encodeURIComponent(download)}`;
       return fetchAndCacheMidiFile(proxyUrl);
@@ -123,7 +123,7 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
       const response = await fetch(`/api/songs/midi/${songId}`);
       return response.arrayBuffer();
     }
-  };
+  }, [songId, origin, download]);
 
   useEffect(() => {
     const initPlayer = async () => {
@@ -159,7 +159,7 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
       Tone.Transport.stop();
       Tone.Transport.cancel();
     };
-  }, [songId, origin, download]);
+  }, [songId, origin, download, getMidiData]);
 
   useEffect(() => {
     if (synth) {
@@ -241,7 +241,7 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0];
     setVolume(newVolume);
-    localStorage.setItem('midiPlayerVolume', newVolume.toString());
+    localStorage.setItem("midiPlayerVolume", newVolume.toString());
     if (synth) {
       synth.volume.value = Tone.gainToDb(newVolume / 100);
     }
@@ -274,7 +274,11 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button onClick={togglePlay} variant="outline" className="flex items-center gap-2 w-10 h-10">
+        <Button
+          onClick={togglePlay}
+          variant="outline"
+          className="flex items-center gap-2 w-10 h-10"
+        >
           {isPlaying ? (
             <Pause className="h-4 w-4" />
           ) : (
@@ -283,7 +287,9 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
         </Button>
 
         <div className="flex-1 flex items-center gap-2">
-          <span className="text-sm text-gray-500 w-10 text-center">{formatTime(currentTime)}</span>
+          <span className="text-sm text-gray-500 w-10 text-center">
+            {formatTime(currentTime)}
+          </span>
           <Slider
             value={[progress]}
             min={0}
@@ -292,7 +298,9 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
             onValueChange={handleSeek}
             className="flex-1"
           />
-          <span className="text-sm text-gray-500 w-10 text-center">{formatTime(duration)}</span>
+          <span className="text-sm text-gray-500 w-10 text-center">
+            {formatTime(duration)}
+          </span>
         </div>
 
         <div className="flex items-center gap-2">

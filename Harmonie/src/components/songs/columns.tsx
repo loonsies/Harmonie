@@ -27,6 +27,208 @@ const getTagLabel = (value: string) => {
   return tag ? tag.label : value;
 };
 
+// Action Cell Component
+const ActionCell = ({ row }: { row: any }) => {
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const song = row.original;
+
+  return (
+    <>
+      <div className="flex gap-1">
+        <Button
+          onClick={() => {
+            downloadSongs([song]);
+          }}
+          variant="ghost"
+          className="h-8 w-8 p-2 align-middle"
+          aria-label="Download song"
+        >
+          <Download className="h-4 w-4" />
+        </Button>
+        <Button
+          onClick={() => setIsPlayerOpen(true)}
+          variant="ghost"
+          className="h-8 w-8 p-2 align-middle"
+          aria-label="Play song"
+        >
+          <Play className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <Dialog open={isPlayerOpen} onOpenChange={setIsPlayerOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{song.title}</DialogTitle>
+          </DialogHeader>
+          <MidiPlayer
+            songId={song.id}
+            download={song.download}
+            origin={song.origin}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+// Author Cell Component
+const AuthorCell = ({ row }: { row: any }) => {
+  const router = useRouter();
+  const origin = row.getValue("origin") as string;
+  const author = row.original.authorName;
+
+  if ((!origin && author) || origin === "harmonie") {
+    return (
+      <a
+        onClick={() => router.push(`/user/${author}`)}
+        className="text-purple-300 hover:underline cursor-pointer"
+      >
+        {author}
+      </a>
+    );
+  }
+
+  if (origin === "bmp") {
+    return <div>{author}</div>;
+  }
+
+  return null;
+};
+
+// Rating Cell Component
+const RatingCell = ({ row }: { row: any }) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentRating, setCurrentRating] = useState(0);
+  const { data: session } = useSession();
+  const songTitle = row.getValue("title") as string;
+  const songId = row.original.id;
+  const [averageRating, setAverageRating] = useState("0.0");
+
+  const handleRatingSubmit = async (newRating: number) => {
+    try {
+      const response = await fetch("/api/ratings/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          songId,
+          rating: newRating,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to submit rating");
+
+      setIsDialogOpen(false);
+      // Fetch the updated average rating
+      const avgResponse = await fetch(`/api/ratings/average?songId=${songId}`);
+      if (!avgResponse.ok) throw new Error("Failed to fetch updated rating");
+      const data = await avgResponse.json();
+      setAverageRating(data.average);
+    } catch (error) {
+      console.error("Failed to submit rating:", error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchAverageRating = async () => {
+      try {
+        const response = await fetch(`/api/ratings/average?songId=${songId}`);
+        if (!response.ok) throw new Error("Failed to fetch rating");
+        const data = await response.json();
+        setAverageRating(data.average);
+      } catch (error) {
+        console.error("Error fetching rating:", error);
+      }
+    };
+
+    fetchAverageRating();
+  }, [songId]);
+
+  return (
+    <>
+      <div className="flex items-center gap-1">
+        {session ? (
+          <button
+            onClick={() => setIsDialogOpen(true)}
+            className="flex items-center gap-1 hover:text-purple-300"
+          >
+            <span className="text-sm">{averageRating}</span>
+            <Star className="h-4 w-4 fill-current" />
+          </button>
+        ) : (
+          <>
+            <span className="text-sm">{averageRating}</span>
+            <Star className="h-4 w-4 fill-current" />
+          </>
+        )}
+      </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>&quot;{songTitle}&quot;</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <Rating
+              style={{ maxWidth: 250 }}
+              value={currentRating}
+              onChange={(newRating: number) => {
+                setCurrentRating(newRating);
+                handleRatingSubmit(newRating);
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+// ManageActions Cell Component
+const ManageActionsCell = ({ row }: { row: any }) => {
+  const { toast } = useToast();
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch("/api/songs/delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ songId: row.original.id }),
+      });
+
+      if (!response.ok) throw new Error("Failed to delete song");
+
+      toast({
+        title: "Success",
+        description: "Song deleted successfully",
+      });
+
+      // Refresh the table
+      window.location.reload();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete song",
+      });
+    }
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={handleDelete}
+      className="text-destructive hover:text-destructive/90"
+    >
+      <Trash2 className="h-4 w-4" />
+    </Button>
+  );
+};
+
 export const columns: ColumnDef<Song>[] = [
   {
     id: "select",
@@ -51,49 +253,7 @@ export const columns: ColumnDef<Song>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const [isPlayerOpen, setIsPlayerOpen] = useState(false);
-      const song = row.original;
-
-      return (
-        <>
-          <div className="flex gap-1">
-            <Button
-              onClick={() => {
-                const song = row.original;
-                downloadSongs([song]);
-              }}
-              variant="ghost"
-              className="h-8 w-8 p-2 align-middle"
-              aria-label="Download song"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={() => setIsPlayerOpen(true)}
-              variant="ghost"
-              className="h-8 w-8 p-2 align-middle"
-              aria-label="Play song"
-            >
-              <Play className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <Dialog open={isPlayerOpen} onOpenChange={setIsPlayerOpen}>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>{song.title}</DialogTitle>
-              </DialogHeader>
-              <MidiPlayer
-                songId={song.id}
-                download={song.download}
-                origin={song.origin}
-              />
-            </DialogContent>
-          </Dialog>
-        </>
-      );
-    },
+    cell: ({ row }) => <ActionCell row={row} />,
   },
   {
     accessorKey: "title",
@@ -105,28 +265,7 @@ export const columns: ColumnDef<Song>[] = [
   {
     accessorKey: "author",
     header: "Author",
-    cell: ({ row }) => {
-      const origin = row.getValue("origin") as string;
-      const author = row.original.authorName;
-      const router = useRouter();
-
-      if ((!origin && author) || origin === "harmonie") {
-        return (
-          <a
-            onClick={() => router.push(`/user/${author}`)}
-            className="text-purple-300 hover:underline cursor-pointer"
-          >
-            {author}
-          </a>
-        );
-      }
-
-      if (origin === "bmp") {
-        return <div>{author}</div>;
-      }
-
-      return null;
-    },
+    cell: ({ row }) => <AuthorCell row={row} />,
   },
   {
     accessorKey: "source",
@@ -161,99 +300,7 @@ export const columns: ColumnDef<Song>[] = [
   {
     id: "rating",
     header: "Rating",
-    cell: ({ row }) => {
-      const [isDialogOpen, setIsDialogOpen] = useState(false);
-      const [currentRating, setCurrentRating] = useState(0);
-      const { data: session } = useSession();
-      const songTitle = row.getValue("title") as string;
-      const songId = row.original.id;
-      const [averageRating, setAverageRating] = useState("0.0");
-
-      const handleRatingSubmit = async (newRating: number) => {
-        try {
-          const response = await fetch("/api/ratings/submit", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              songId,
-              rating: newRating,
-            }),
-          });
-
-          if (!response.ok) throw new Error("Failed to submit rating");
-
-          setIsDialogOpen(false);
-          // Fetch the updated average rating
-          const avgResponse = await fetch(
-            `/api/ratings/average?songId=${songId}`
-          );
-          if (!avgResponse.ok)
-            throw new Error("Failed to fetch updated rating");
-          const data = await avgResponse.json();
-          setAverageRating(data.average);
-        } catch (error) {
-          console.error("Failed to submit rating:", error);
-        }
-      };
-
-      useEffect(() => {
-        const fetchAverageRating = async () => {
-          try {
-            const response = await fetch(
-              `/api/ratings/average?songId=${songId}`
-            );
-            if (!response.ok) throw new Error("Failed to fetch rating");
-            const data = await response.json();
-            setAverageRating(data.average);
-          } catch (error) {
-            console.error("Error fetching rating:", error);
-          }
-        };
-
-        fetchAverageRating();
-      }, [songId]);
-
-      return (
-        <>
-          <div className="flex items-center gap-1">
-            {session ? (
-              <button
-                onClick={() => setIsDialogOpen(true)}
-                className="flex items-center gap-1 hover:text-purple-300"
-              >
-                <span className="text-sm">{averageRating}</span>
-                <Star className="h-4 w-4 fill-current" />
-              </button>
-            ) : (
-              <>
-                <span className="text-sm">{averageRating}</span>
-                <Star className="h-4 w-4 fill-current" />
-              </>
-            )}
-          </div>
-
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Rate "{songTitle}"</DialogTitle>
-              </DialogHeader>
-              <div className="flex flex-col items-center gap-4 py-4">
-                <Rating
-                  style={{ maxWidth: 250 }}
-                  value={currentRating}
-                  onChange={(newRating: number) => {
-                    setCurrentRating(newRating);
-                    handleRatingSubmit(newRating);
-                  }}
-                />
-              </div>
-            </DialogContent>
-          </Dialog>
-        </>
-      );
-    },
+    cell: ({ row }) => <RatingCell row={row} />,
   },
   {
     accessorKey: "dateUploaded",
@@ -280,47 +327,6 @@ export const columns: ColumnDef<Song>[] = [
   },
   {
     id: "manageActions",
-    cell: ({ row }) => {
-      const { toast } = useToast();
-
-      const handleDelete = async () => {
-        try {
-          const response = await fetch("/api/songs/delete", {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ songId: row.original.id }),
-          });
-
-          if (!response.ok) throw new Error("Failed to delete song");
-
-          toast({
-            title: "Success",
-            description: "Song deleted successfully",
-          });
-
-          // Refresh the table
-          window.location.reload();
-        } catch (error) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to delete song",
-          });
-        }
-      };
-
-      return (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleDelete}
-          className="text-destructive hover:text-destructive/90"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      );
-    },
+    cell: ({ row }) => <ManageActionsCell row={row} />,
   },
 ];

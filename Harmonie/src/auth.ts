@@ -93,4 +93,5 @@ export const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
       return token;
     },
   },
+  trustHost: true,
 });

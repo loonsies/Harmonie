@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   CustomFlowbiteTheme,
   Flowbite,
@@ -37,7 +38,7 @@ export default function ClientNavBar() {
     <Flowbite theme={{ theme: customTheme }}>
       <Navbar fluid>
         <NavbarBrand as={Link} href="/">
-          <img
+          <Image
             src="/icons/logo.svg"
             className="mr-2 h-6 sm:h-9"
             alt="Harmonie Logo"

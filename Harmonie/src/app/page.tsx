@@ -2,6 +2,8 @@ import { getSongs } from "@/utils/db";
 import { SongTable } from "@/components/songs/table";
 import { columns } from "@/components/songs/columns";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const bmpData = await getSongs("bmp");
   const harmonieData = await getSongs("harmonie");
