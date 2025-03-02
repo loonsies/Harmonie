@@ -19,7 +19,7 @@ This is a hobby project, nothing more. I like chilling in Gridania and playing m
 ## Technical Details
 
 - The application fetches data from BardMusicPlayer only twice per day, with the same resource impact as a regular page visit
-- Songs are downloaded from BardMusicPlayer's servers for MIDI preview functionality and cached on our server for one year to avoid hammering them with requests
+- Songs are downloaded from BardMusicPlayer's servers for MIDI preview functionality on the fly and cached on our server for one year to avoid hammering them with requests
 - Built using Next.js for server-side rendering and optimal performance
 
 ## Ethical Considerations
