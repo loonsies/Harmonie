@@ -1,5 +1,5 @@
 services:
-  nextjs:
+  harmonie-nextjs:
     container_name: harmonie-nextjs
     build:
       context: /mnt/user/compose/harmonie
@@ -11,27 +11,27 @@ services:
     ports:
       - 7474:7474
     depends_on:
-      - db
+      - harmonie-db
     volumes:
       - /mnt/user/harmonie-data:/app/public
     restart: unless-stopped
 
-  db:
+  harmonie-db:
     container_name: harmonie-db
     image: postgres:latest
     env_file: /mnt/user/compose/harmonie/Harmonie/.env
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - harmonie-pg-data:/var/lib/postgresql/data
     ports:
-      - 5433:5433
+      - 5433:5432
 
-  bmpscrapper:
+  harmonie-bmpscrapper:
     container_name: harmonie-bmpscrapper
     build:
       context: /mnt/user/compose/harmonie/bmpscrapper
       dockerfile: Dockerfile
     depends_on:
-      - db
+      - harmonie-db
     environment:
       - PYTHONUNBUFFERED=1
     env_file:
@@ -39,4 +39,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres_data:
+  harmonie-pg-data:
