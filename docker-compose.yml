@@ -13,7 +13,8 @@ services:
     depends_on:
       - harmonie-db
     volumes:
-      - /mnt/user/harmonie-data:/app/public
+      - /mnt/user/harmonie-data/public:/app/public
+      - /mnt/user/harmonie-data/midi-cache:/app/midi-cache
     restart: unless-stopped
 
   harmonie-db:
