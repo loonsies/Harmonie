@@ -8,7 +8,7 @@ import { nanoid } from "nanoid";
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !session?.user?.name) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
