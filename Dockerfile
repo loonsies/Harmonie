@@ -31,6 +31,11 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Create directories for mounted volumes with correct permissions
+RUN mkdir -p /app/public /app/midi-cache && \
+    chown nextjs:nodejs /app/public /app/midi-cache && \
+    chmod 755 /app/public /app/midi-cache
+
 # Copy the built application
 COPY --from=builder --chown=nextjs:nodejs /app/public /app/public
 COPY --from=builder --chown=nextjs:nodejs /app/.next /app/.next

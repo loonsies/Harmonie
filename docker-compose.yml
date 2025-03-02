@@ -15,6 +15,7 @@ services:
     volumes:
       - /mnt/user/harmonie-data/public:/app/public
       - /mnt/user/harmonie-data/midi-cache:/app/midi-cache
+    user: "1001:1001"
     restart: unless-stopped
 
   harmonie-db:
