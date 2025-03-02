@@ -42,6 +42,7 @@ interface SongTableProps {
   }[];
   columns: ColumnDef<any>[];
   showManageActions: boolean;
+  onSongDeleted?: (songId: string) => void;
 }
 
 const initialState: InitialTableState = { columnVisibility: { origin: false } };
@@ -50,6 +51,7 @@ export function SongTable({
   data,
   columns,
   showManageActions,
+  onSongDeleted,
 }: SongTableProps) {
   const finalColumns = showManageActions
     ? columns

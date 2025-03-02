@@ -1,14 +1,46 @@
-import { auth } from "@/auth";
+"use client";
+
 import { AddSongWrapper } from "@/components/songs/addSongWrapper";
 import { SongTable } from "@/components/songs/table";
 import { columns } from "@/components/songs/columns";
 import { Suspense } from "react";
-import { headers } from "next/headers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { redirect } from "next/navigation";
+import { useState, useEffect } from "react";
+import { Song } from "@/data/types/song";
+import { useSession } from "next-auth/react";
 
-export default async function ManagePage() {
-  const session = await auth();
+function UserSongs() {
+  const [songs, setSongs] = useState<Song[]>([]);
+
+  useEffect(() => {
+    const fetchSongs = async () => {
+      const response = await fetch("/api/songs/user", {
+        credentials: "include",
+      });
+      const data = await response.json();
+      setSongs(data);
+    };
+
+    fetchSongs();
+  }, []);
+
+  const handleSongDeleted = (songId: string) => {
+    setSongs((prevSongs) => prevSongs.filter((song) => song.id !== songId));
+  };
+
+  return (
+    <SongTable 
+      data={songs} 
+      columns={columns} 
+      showManageActions={true} 
+      onSongDeleted={handleSongDeleted}
+    />
+  );
+}
+
+export default function ManagePage() {
+  const { data: session } = useSession();
 
   if (!session) {
     redirect("/auth/login");
@@ -38,21 +70,4 @@ export default async function ManagePage() {
       </div>
     </main>
   );
-}
-
-async function UserSongs() {
-  const headersList = await headers();
-  const host = headersList.get("host");
-  const proto = process?.env?.NODE_ENV === "development" ? "http" : "https";
-
-  const response = await fetch(`${proto}://${host}/api/songs/user`, {
-    cache: "no-store",
-    credentials: "include",
-    headers: {
-      Cookie: headersList.get("cookie") || "",
-    },
-  });
-  const songs = await response.json();
-
-  return <SongTable data={songs} columns={columns} showManageActions={true} />;
 }
