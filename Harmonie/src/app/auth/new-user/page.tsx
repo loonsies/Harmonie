@@ -19,16 +19,14 @@ import { useToast } from "@/hooks/use-toast";
 import { usernameSchema } from "@/app/schemas/usernameSchema";
 import { useUser } from "@/contexts/UserContext";
 import { useSession } from "next-auth/react";
-import { auth } from "@/auth";
 
 type UsernameFormProps = TypeOf<typeof usernameSchema>;
 
-export default async function NewUser() {
+export default function NewUser() {
   const router = useRouter();
   const { toast } = useToast();
   const { updateUserData } = useUser();
-  const { update: updateSession } = useSession();
-  const session = await auth();
+  const { data: session, update: updateSession } = useSession();
 
   useEffect(() => {
     if (!session) {

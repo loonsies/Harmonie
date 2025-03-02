@@ -2,23 +2,20 @@ import { auth } from "@/auth";
 import { AddSongWrapper } from "@/components/songs/addSongWrapper";
 import { SongTable } from "@/components/songs/table";
 import { columns } from "@/components/songs/columns";
-import { Suspense, useEffect } from "react";
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRouter } from "next/router";
+import { redirect } from "next/navigation";
 
 export default async function ManagePage() {
-  const router = useRouter();
   const session = await auth();
 
-  useEffect(() => {
-    if (!session) {
-      router.push("/auth/login");
-    }
-    if (!session?.user?.name) {
-      router.push("/auth/new-user");
-    }
-  }, [session, router]);
+  if (!session) {
+    redirect("/auth/login");
+  }
+  if (!session?.user?.name) {
+    redirect("/auth/new-user");
+  }
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
