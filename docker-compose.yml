@@ -4,6 +4,7 @@ services:
     build:
       context: /mnt/user/compose/harmonie
       target: runner
+    env_file: /mnt/user/compose/harmonie/Harmonie/.env
     command: npm run start
     environment:
       - NODE_ENV=production
