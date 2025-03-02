@@ -186,9 +186,8 @@ const RatingCell = ({ row }: { row: any }) => {
 };
 
 // ManageActions Cell Component
-const ManageActionsCell = ({ row, table }: { row: any; table: any }) => {
+const ManageActionsCell = ({ row }: { row: any }) => {
   const { toast } = useToast();
-  const onSongDeleted = table.options.onSongDeleted;
 
   const handleDelete = async () => {
     try {
@@ -207,10 +206,8 @@ const ManageActionsCell = ({ row, table }: { row: any; table: any }) => {
         description: "Song deleted successfully",
       });
 
-      // Call the callback instead of reloading the page
-      if (onSongDeleted) {
-        onSongDeleted(row.original.id);
-      }
+      // Refresh the table
+      window.location.reload();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -330,6 +327,6 @@ export const columns: ColumnDef<Song>[] = [
   },
   {
     id: "manageActions",
-    cell: ({ row, table }) => <ManageActionsCell row={row} table={table} />,
+    cell: ({ row }) => <ManageActionsCell row={row} />,
   },
 ];
