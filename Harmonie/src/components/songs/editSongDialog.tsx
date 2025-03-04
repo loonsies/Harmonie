@@ -90,7 +90,7 @@ export function EditSongDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit "{song.title}"</DialogTitle>
+          <DialogTitle>Edit &ldquo;{song.title}&rdquo;</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
