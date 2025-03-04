@@ -9,4 +9,5 @@ export interface Song {
   authorId: string;
   authorName: string | null;
   origin: string;
+  averageRating: string;
 }

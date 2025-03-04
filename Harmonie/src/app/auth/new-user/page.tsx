@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usernameSchema } from "@/app/schemas/usernameSchema";
 import { useUser } from "@/contexts/UserContext";
 import { useSession } from "next-auth/react";
+import Metadata from "@/utils/metadata";
 
 type UsernameFormProps = TypeOf<typeof usernameSchema>;
 
@@ -82,6 +83,7 @@ export default function NewUser() {
 
   return (
     <div className="flex min-h-screen flex-col items-center mx-auto p-4 md:p-24 max-w-[40rem]">
+      <Metadata title="New User"></Metadata>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Choose your username</CardTitle>

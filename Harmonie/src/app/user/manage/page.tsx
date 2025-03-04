@@ -6,6 +6,8 @@ import { Suspense } from "react";
 import { headers } from "next/headers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { redirect } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import Metadata from "@/utils/metadata";
 
 export default async function ManagePage() {
   const session = await auth();
@@ -19,6 +21,7 @@ export default async function ManagePage() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
+      <Metadata title="Manage"></Metadata>
       <div className="space-y-8">
         <Card>
           <CardHeader>
@@ -31,7 +34,13 @@ export default async function ManagePage() {
 
         <div>
           <h2 className="text-2xl font-bold mb-4">Your Songs</h2>
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense
+            fallback={
+              <div className="flex flex-col items-center justify-center gap-2 p-4">
+                <Loader2 className="h-8 w-8 my-10 animate-spin text-primary" />
+              </div>
+            }
+          >
             <UserSongs />
           </Suspense>
         </div>

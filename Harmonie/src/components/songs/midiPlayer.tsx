@@ -3,7 +3,7 @@ import * as Tone from "tone";
 import { Midi } from "@tonejs/midi";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Play, Pause, Volume2 } from "lucide-react";
+import { Loader2, Play, Pause, Volume2, MoreVertical, Download } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
   Tooltip,
@@ -11,6 +11,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useUser } from "@/contexts/UserContext";
+import { downloadSongs } from "@/utils/downloadSongs";
 
 interface Track {
   name: string;
@@ -23,9 +31,10 @@ interface MidiPlayerProps {
   songId: string;
   download?: string;
   origin?: string;
+  song?: any;
 }
 
-export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
+export function MidiPlayer({ songId, download, origin, song }: MidiPlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -39,6 +48,7 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
   });
   const [showVolumeTooltip, setShowVolumeTooltip] = useState(false);
   const timeUpdateInterval = useRef<number | null>(null);
+  const { autoplayEnabled, toggleAutoplay } = useUser();
 
   const resetPlayback = useCallback(() => {
     setIsPlaying(false);
@@ -162,6 +172,17 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
   }, [songId, origin, download, getMidiData]);
 
   useEffect(() => {
+    if (!isLoading && autoplayEnabled && !isPlaying && synth) {
+      const startPlayback = async () => {
+        await Tone.start();
+        Tone.Transport.start();
+        setIsPlaying(true);
+      };
+      startPlayback();
+    }
+  }, [isLoading, autoplayEnabled, isPlaying, synth]);
+
+  useEffect(() => {
     if (synth) {
       synth.volume.value = Tone.gainToDb(volume / 100);
     }
@@ -258,7 +279,15 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
   return (
     <div className="flex flex-col gap-4 p-4 rounded-lg border">
       <div className="flex flex-col gap-2">
-        <div className="text-sm font-medium">Tracks:</div>
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium">
+            Tracks (
+            <span className="font-bold">
+              {tracks.filter((t) => t.enabled).length}
+            </span>
+            /<span className="font-bold">{tracks.length}</span>) :
+          </div>
+        </div>
         {tracks.map((track, index) => (
           <div key={index} className="flex items-center gap-2">
             <Checkbox
@@ -331,6 +360,19 @@ export function MidiPlayer({ songId, download, origin }: MidiPlayerProps) {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 p-2">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={toggleAutoplay}>
+                {autoplayEnabled ? "Disable autoplay" : "Enable autoplay"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>

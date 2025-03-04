@@ -11,6 +11,8 @@ interface UserContextType {
   };
   updateUserData: (data: Partial<{ name: string; email: string }>) => void;
   updateAvatar: () => void;
+  autoplayEnabled: boolean;
+  toggleAutoplay: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -21,6 +23,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     name: session?.user?.name || undefined,
     email: session?.user?.email || undefined,
     avatarKey: 0,
+  });
+  const [autoplayEnabled, setAutoplayEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem("midiPlayerAutoplay");
+      return saved === "true";
+    }
+    return false;
   });
 
   // Keep userData in sync with session
@@ -48,8 +57,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  const toggleAutoplay = () => {
+    setAutoplayEnabled(prev => {
+      const newValue = !prev;
+      localStorage.setItem("midiPlayerAutoplay", String(newValue));
+      return newValue;
+    });
+  };
+
   return (
-    <UserContext.Provider value={{ userData, updateUserData, updateAvatar }}>
+    <UserContext.Provider value={{ userData, updateUserData, updateAvatar, autoplayEnabled, toggleAutoplay }}>
       {children}
     </UserContext.Provider>
   );

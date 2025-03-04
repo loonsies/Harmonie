@@ -28,7 +28,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "../instrumentation.ts"
+    "../instrumentation.ts",
+    "src/data/types/next-auth.d.tss"
   ],
   "exclude": ["node_modules"]
 }

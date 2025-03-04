@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Song } from "@/data/types/song";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2, Star, Play } from "lucide-react";
+import { Download, Trash2, Star, Play, Pencil } from "lucide-react";
 import { tags } from "@/data/tags";
 import { Button } from "@/components/ui/button";
 import { downloadSongs } from "@/utils/downloadSongs";
@@ -20,7 +20,14 @@ import {
 import { useSession } from "next-auth/react";
 import { Rating } from "@smastrom/react-rating";
 import "@smastrom/react-rating/style.css";
-import { MidiPlayer } from "@/components/songs/MidiPlayer";
+import { MidiPlayer } from "@/components/songs/midiPlayer";
+import { EditSongDialog } from "@/components/songs/editSongDialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const getTagLabel = (value: string) => {
   const tag = tags.find((t) => t.value === value);
@@ -28,23 +35,13 @@ const getTagLabel = (value: string) => {
 };
 
 // Action Cell Component
-const ActionCell = ({ row }: { row: any }) => {
+const ActionCell = ({ row, table }: { row: any; table: any }) => {
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const song = row.original;
 
   return (
     <>
       <div className="flex gap-1">
-        <Button
-          onClick={() => {
-            downloadSongs([song]);
-          }}
-          variant="ghost"
-          className="h-8 w-8 p-2 align-middle"
-          aria-label="Download song"
-        >
-          <Download className="h-4 w-4" />
-        </Button>
         <Button
           onClick={() => setIsPlayerOpen(true)}
           variant="ghost"
@@ -57,13 +54,32 @@ const ActionCell = ({ row }: { row: any }) => {
 
       <Dialog open={isPlayerOpen} onOpenChange={setIsPlayerOpen}>
         <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>{song.title}</DialogTitle>
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-4">
+              <DialogTitle>{song.title}</DialogTitle>
+            </div>
+            <div className="flex items-center gap-2 mr-2">
+              <Checkbox
+                checked={row.getIsSelected()}
+                onCheckedChange={(value) => row.toggleSelected(!!value)}
+                aria-label="Select song"
+                className="align-middle"
+              />
+              <Button
+                onClick={() => downloadSongs([song])}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 p-2"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
           </DialogHeader>
           <MidiPlayer
             songId={song.id}
             download={song.download}
             origin={song.origin}
+            song={song}
           />
         </DialogContent>
       </Dialog>
@@ -102,7 +118,9 @@ const RatingCell = ({ row }: { row: any }) => {
   const { data: session } = useSession();
   const songTitle = row.getValue("title") as string;
   const songId = row.original.id;
-  const [averageRating, setAverageRating] = useState("0.0");
+  const [averageRating, setAverageRating] = useState(
+    row.original.averageRating
+  );
 
   const handleRatingSubmit = async (newRating: number) => {
     try {
@@ -129,21 +147,6 @@ const RatingCell = ({ row }: { row: any }) => {
       console.error("Failed to submit rating:", error);
     }
   };
-
-  useEffect(() => {
-    const fetchAverageRating = async () => {
-      try {
-        const response = await fetch(`/api/ratings/average?songId=${songId}`);
-        if (!response.ok) throw new Error("Failed to fetch rating");
-        const data = await response.json();
-        setAverageRating(data.average);
-      } catch (error) {
-        console.error("Error fetching rating:", error);
-      }
-    };
-
-    fetchAverageRating();
-  }, [songId]);
 
   return (
     <>
@@ -188,6 +191,8 @@ const RatingCell = ({ row }: { row: any }) => {
 // ManageActions Cell Component
 const ManageActionsCell = ({ row }: { row: any }) => {
   const { toast } = useToast();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const router = useRouter();
 
   const handleDelete = async () => {
     try {
@@ -207,7 +212,7 @@ const ManageActionsCell = ({ row }: { row: any }) => {
       });
 
       // Refresh the table
-      window.location.reload();
+      router.refresh();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -218,14 +223,31 @@ const ManageActionsCell = ({ row }: { row: any }) => {
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={handleDelete}
-      className="text-destructive hover:text-destructive/90"
-    >
-      <Trash2 className="h-4 w-4" />
-    </Button>
+    <div className="flex gap-1">
+      <Button
+        className="h-8 w-8 p-2 align-middle"
+        variant="ghost"
+        size="icon"
+        onClick={() => setIsEditDialogOpen(true)}
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleDelete}
+        className="text-destructive hover:text-destructive/90 h-8 w-8 p-2 align-middle"
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+
+      <EditSongDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        song={row.original}
+        onSongEdited={() => router.refresh()}
+      />
+    </div>
   );
 };
 
@@ -253,7 +275,7 @@ export const columns: ColumnDef<Song>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => <ActionCell row={row} />,
+    cell: ({ row, table }) => <ActionCell row={row} table={table} />,
   },
   {
     accessorKey: "title",
@@ -285,13 +307,37 @@ export const columns: ColumnDef<Song>[] = [
             .filter((tag) => tag.length > 0)
         : [];
 
+      const displayTags = tagList.slice(0, 3);
+      const remainingTags = tagList.slice(3);
+      const hasMoreTags = remainingTags.length > 0;
+
       return (
         <div className="flex gap-1">
-          {tagList.map((tag) => (
+          {displayTags.map((tag) => (
             <Badge key={tag} variant="outline">
               {getTagLabel(tag)}
             </Badge>
           ))}
+          {hasMoreTags && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="cursor-help">
+                    ...
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="flex flex-wrap gap-1">
+                    {remainingTags.map((tag) => (
+                      <Badge key={tag} variant="outline">
+                        {getTagLabel(tag)}
+                      </Badge>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       );
     },

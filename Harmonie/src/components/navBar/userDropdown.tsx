@@ -44,6 +44,13 @@ export default function UserDropdown({ user }: UserDropdownProps) {
       </DropdownHeader>
       <DropdownItem
         as={Link}
+        href={`/user/${userData.name || user?.name}`}
+        className={isActive(`/user/${userData.name || user?.name}`) ? "font-bold" : ""}
+      >
+        Profile
+      </DropdownItem>
+      <DropdownItem
+        as={Link}
         href="/user/settings"
         className={isActive("/user/settings") ? "font-bold" : ""}
       >

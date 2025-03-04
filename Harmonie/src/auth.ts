@@ -35,6 +35,7 @@ export const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
               name: user.name,
               email: user.email,
               image: user.image,
+              role: user.role,
             };
           } else {
             return null;
@@ -55,6 +56,7 @@ export const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
           name: null,
           email: profile.email,
           image: profile.image,
+          role: 0,
         };
       },
     }),
@@ -73,22 +75,28 @@ export const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
         session.user.name = token.name as string;
         session.user.email = token.email as string;
         session.user.image = token.image as string | null;
+        session.user.role = token.role as number;
       }
       if (trigger === "update" && session && session.user) {
         token.name = session.user.name;
         token.email = session.user.email;
         token.image = session.user.image;
+        token.role = session.user.role;
       }
       if (token.sub) {
         session.user.id = token.sub;
       }
       return session;
     },
-    async jwt({ token, trigger, session }) {
+    async jwt({ token, trigger, session, user }) {
+      if (user) {
+        token.role = user.role;
+      }
       if (trigger === "update" && session?.user) {
         token.name = session.user.name;
         token.email = session.user.email;
         token.image = session.user.image;
+        token.role = session.user.role;
       }
       return token;
     },

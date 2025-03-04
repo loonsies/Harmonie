@@ -8,7 +8,6 @@ export default function SignIn() {
     <div>
       <Metadata title="Sign In"></Metadata>
       <div className="flex min-h-screen flex-col items-center mx-auto p-4 md:p-24 max-w-[40rem]">
-        <Metadata title="Sign In"></Metadata>
         <LoginForm />
       </div>
     </div>

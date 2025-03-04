@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { tags } from "@/data/tags";
 import { TagSelector } from "@/components/tagSelector";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,8 @@ export function AddSongForm({ onSongAdded }: { onSongAdded: () => void }) {
   const [comment, setComment] = useState("");
   const [source, setSource] = useState("");
   const [midiFile, setMidiFile] = useState<File | null>(null);
+  const [formKey, setFormKey] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,6 +55,10 @@ export function AddSongForm({ onSongAdded }: { onSongAdded: () => void }) {
       setComment("");
       setSource("");
       setMidiFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      setFormKey(prev => prev + 1);
       onSongAdded();
     } catch (error) {
       toast({
@@ -79,7 +85,11 @@ export function AddSongForm({ onSongAdded }: { onSongAdded: () => void }) {
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Tags</label>
-        <TagSelector value={selectedTags} onChange={setSelectedTags} />
+        <TagSelector 
+          key={formKey} 
+          value={selectedTags} 
+          onChange={setSelectedTags} 
+        />
       </div>
       <div>
         <label htmlFor="source" className="block text-sm font-medium mb-1">
@@ -110,6 +120,7 @@ export function AddSongForm({ onSongAdded }: { onSongAdded: () => void }) {
         </label>
         <Input
           id="midi"
+          ref={fileInputRef}
           type="file"
           accept=".mid,.midi"
           onChange={(e) => setMidiFile(e.target.files?.[0] || null)}

@@ -1,11 +1,11 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eq, isNotNull, isNull } from "drizzle-orm";
-import { songs, users } from "@/schema";
+import { songs, users, ratings } from "@/schema";
 import type { InferSelectModel } from "drizzle-orm";
 import { verifyPassword } from "@/utils/password";
 import { Song } from "@/data/types/song";
-import { sql } from "drizzle-orm";
+import { sql, avg } from "drizzle-orm";
 
 const connectionString = process.env.AUTH_DRIZZLE_URL || "";
 const queryClient = postgres(connectionString);
@@ -56,6 +56,7 @@ export async function getUserFromName(name: string): Promise<User | null> {
 
 export async function getSongs(source: string): Promise<Song[]> {
   if (source == "bmp") {
+    console.log('Fetching BMP songs...');
     const result = await db
       .select({
         id: songs.id,
@@ -68,12 +69,23 @@ export async function getSongs(source: string): Promise<Song[]> {
         authorName: songs.bpmAuthor,
         dateUploaded: songs.dateUploaded,
         origin: sql<string>`'bmp'`,
+        averageRating: avg(ratings.rating).mapWith(String),
       })
       .from(songs)
-      .where(isNotNull(songs.bmpId));
+      .leftJoin(ratings, eq(songs.id, ratings.song_id))
+      .where(isNotNull(songs.bmpId))
+      .groupBy(songs.id);
+    console.log(`Found ${result.length} BMP songs`);
 
-    return result;
+    // Convert null averages to "0.0"
+    return result.map((song) => ({
+      ...song,
+      averageRating: song.averageRating
+        ? Number(song.averageRating).toFixed(1)
+        : "0.0",
+    }));
   } else if (source == "harmonie") {
+    console.log('Fetching Harmonie songs...');
     const result = await db
       .select({
         id: songs.id,
@@ -86,12 +98,22 @@ export async function getSongs(source: string): Promise<Song[]> {
         authorName: users.name,
         dateUploaded: songs.dateUploaded,
         origin: sql<string>`'harmonie'`,
+        averageRating: avg(ratings.rating).mapWith(String),
       })
       .from(songs)
       .leftJoin(users, eq(songs.author, users.id))
-      .where(isNull(songs.bmpId));
+      .leftJoin(ratings, eq(songs.id, ratings.song_id))
+      .where(isNull(songs.bmpId))
+      .groupBy(songs.id, users.name);
+    console.log(`Found ${result.length} Harmonie songs`);
 
-    return result;
+    // Convert null averages to "0.0"
+    return result.map((song) => ({
+      ...song,
+      averageRating: song.averageRating
+        ? Number(song.averageRating).toFixed(1)
+        : "0.0",
+    }));
   }
   return [];
 }
