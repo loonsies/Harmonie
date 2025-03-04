@@ -1,12 +1,11 @@
 import { SongTable } from "@/components/songs/table";
 import { columns } from "@/components/songs/columns";
-import { db, users, songs, ratings } from "@/schema";
-import { eq, avg } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Metadata from "@/utils/metadata";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { getUserFromName, getUserSongs } from "@/utils/db";
 
 export default async function UserProfile(props: {
   params: Promise<{ username: string }>;
@@ -15,42 +14,18 @@ export default async function UserProfile(props: {
 
   const { username } = params;
 
-  const user = await db
-    .select()
-    .from(users)
-    .where(eq(users.name, username))
-    .then((res) => res[0]);
+  // Return 404 if someone tries to access /user/bmp
+  if (username.toLowerCase() === "bmp") {
+    notFound();
+  }
+
+  const user = await getUserFromName(username);
 
   if (!user) {
     notFound();
   }
 
-  const userSongs = await db
-    .select({
-      id: songs.id,
-      title: songs.title,
-      tags: songs.tags,
-      download: songs.download,
-      source: songs.source,
-      comment: songs.comment,
-      dateUploaded: songs.dateUploaded,
-      authorId: songs.author,
-      authorName: users.name,
-      averageRating: avg(ratings.rating).mapWith(String),
-    })
-    .from(songs)
-    .leftJoin(users, eq(songs.author, users.id))
-    .leftJoin(ratings, eq(songs.id, ratings.song_id))
-    .where(eq(songs.author, user.id))
-    .groupBy(songs.id, users.name);
-
-  // Convert null averages to "0.0"
-  const processedSongs = userSongs.map((song) => ({
-    ...song,
-    averageRating: song.averageRating
-      ? Number(song.averageRating).toFixed(1)
-      : "0.0",
-  }));
+  const userSongs = await getUserSongs(user.id);
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
@@ -90,7 +65,7 @@ export default async function UserProfile(props: {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {processedSongs.length} song{processedSongs.length !== 1 ? 's' : ''} uploaded
+                  {userSongs.length} song{userSongs.length !== 1 ? 's' : ''} uploaded
                 </p>
               </div>
             </div>
@@ -100,7 +75,7 @@ export default async function UserProfile(props: {
         <div>
           <h2 className="text-2xl font-bold mb-4">Songs</h2>
           <SongTable
-            data={processedSongs}
+            data={userSongs}
             columns={columns}
             showManageActions={false}
           />

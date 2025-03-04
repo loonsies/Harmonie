@@ -56,7 +56,6 @@ export async function getUserFromName(name: string): Promise<User | null> {
 
 export async function getSongs(source: string): Promise<Song[]> {
   if (source == "bmp") {
-    console.log('Fetching BMP songs...');
     const result = await db
       .select({
         id: songs.id,
@@ -85,7 +84,6 @@ export async function getSongs(source: string): Promise<Song[]> {
         : "0.0",
     }));
   } else if (source == "harmonie") {
-    console.log('Fetching Harmonie songs...');
     const result = await db
       .select({
         id: songs.id,
@@ -105,7 +103,6 @@ export async function getSongs(source: string): Promise<Song[]> {
       .leftJoin(ratings, eq(songs.id, ratings.song_id))
       .where(isNull(songs.bmpId))
       .groupBy(songs.id, users.name);
-    console.log(`Found ${result.length} Harmonie songs`);
 
     // Convert null averages to "0.0"
     return result.map((song) => ({
@@ -116,6 +113,38 @@ export async function getSongs(source: string): Promise<Song[]> {
     }));
   }
   return [];
+}
+
+export async function getUserSongs(userId: string): Promise<Song[]> {
+  const userSongs = await db
+  .select({
+    id: songs.id,
+    title: songs.title,
+    tags: songs.tags,
+    download: songs.download,
+    source: songs.source,
+    comment: songs.comment,
+    dateUploaded: songs.dateUploaded,
+    authorId: songs.author,
+    authorName: users.name,
+    bmpId: songs.bmpId,
+    averageRating: avg(ratings.rating).mapWith(String),
+  })
+  .from(songs)
+  .leftJoin(users, eq(songs.author, users.id))
+  .leftJoin(ratings, eq(songs.id, ratings.song_id))
+  .where(eq(songs.author, userId))
+  .groupBy(songs.id, users.name);
+
+  // Convert null averages to "0.0" and add origin based on bmpId
+  const processedSongs = userSongs.map((song) => ({
+    ...song,
+    origin: song.bmpId ? "bmp" : "harmonie",
+    averageRating: song.averageRating
+      ? Number(song.averageRating).toFixed(1)
+      : "0.0",
+  }));
+  return processedSongs
 }
 
 export async function getUserAvatarByUsername(

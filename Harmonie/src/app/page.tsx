@@ -12,9 +12,6 @@ export const dynamic = "force-dynamic";
 function SongData({ showManageActions }: { showManageActions: boolean }) {
   const bmpData = use(getSongs("bmp"));
   const harmonieData = use(getSongs("harmonie"));
-  console.log('BMP songs:', bmpData.length);
-  console.log('Harmonie songs:', harmonieData.length);
-  console.log('Total songs:', bmpData.length + harmonieData.length);
   const data = [...bmpData, ...harmonieData];
 
   return (
