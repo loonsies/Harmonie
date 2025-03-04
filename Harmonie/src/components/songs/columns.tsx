@@ -50,6 +50,14 @@ const ActionCell = ({ row, table }: { row: any; table: any }) => {
         >
           <Play className="h-4 w-4" />
         </Button>
+        <Button
+          onClick={() => downloadSongs([song])}
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 p-2 align-middle"
+        >
+          <Download className="h-4 w-4" />
+        </Button>
       </div>
 
       <Dialog open={isPlayerOpen} onOpenChange={setIsPlayerOpen}>
@@ -97,7 +105,7 @@ const AuthorCell = ({ row }: { row: any }) => {
     return (
       <a
         onClick={() => router.push(`/user/${author}`)}
-        className="text-purple-300 hover:underline cursor-pointer"
+        className="text-purple-400 hover:underline cursor-pointer"
       >
         {author}
       </a>
@@ -279,6 +287,7 @@ export const columns: ColumnDef<Song>[] = [
   },
   {
     accessorKey: "title",
+    header: "Title",
   },
   {
     accessorKey: "comment",

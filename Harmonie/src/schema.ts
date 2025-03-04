@@ -13,10 +13,20 @@ import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { AdapterAccountType } from "next-auth/adapters";
 
-const connectionString = process.env.AUTH_DRIZZLE_URL || "";
-const pool = postgres(connectionString, { max: 1 });
+// Global type declaration for the database singleton
+declare global {
+  var db: ReturnType<typeof drizzle> | undefined;
+}
 
-export const db = drizzle(pool);
+const connectionString = process.env.AUTH_DRIZZLE_URL || "";
+
+// Create the client only if it doesn't exist
+const client = globalThis.db || drizzle(postgres(connectionString, { max: 1 }));
+
+// In development, save the client to the global object to prevent multiple instances
+if (process.env.NODE_ENV === 'development') globalThis.db = client;
+
+export const db = client;
 
 export const users = pgTable("user", {
   id: uuid("id")

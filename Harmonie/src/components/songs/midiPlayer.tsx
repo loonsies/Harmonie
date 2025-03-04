@@ -48,6 +48,7 @@ export function MidiPlayer({ songId, download, origin, song }: MidiPlayerProps) 
   });
   const [showVolumeTooltip, setShowVolumeTooltip] = useState(false);
   const timeUpdateInterval = useRef<number | null>(null);
+  const firstLoad = useRef(true);
   const { autoplayEnabled, toggleAutoplay } = useUser();
 
   const resetPlayback = useCallback(() => {
@@ -172,7 +173,8 @@ export function MidiPlayer({ songId, download, origin, song }: MidiPlayerProps) 
   }, [songId, origin, download, getMidiData]);
 
   useEffect(() => {
-    if (!isLoading && autoplayEnabled && !isPlaying && synth) {
+    if (!isLoading && autoplayEnabled && !isPlaying && synth && firstLoad.current) {
+      firstLoad.current = false;
       const startPlayback = async () => {
         await Tone.start();
         Tone.Transport.start();
