@@ -35,7 +35,11 @@ export function EditSongDialog({
 }: EditSongDialogProps) {
   const [title, setTitle] = useState(song.title);
   const [selectedTags, setSelectedTags] = useState<string[]>(
-    song.tags ? song.tags.split(",") : []
+    Array.isArray(song.tags)
+      ? song.tags
+      : typeof song.tags === "string" && song.tags.length > 0
+      ? song.tags.split(",").map(tag => tag.trim())
+      : []
   );
   const [comment, setComment] = useState(song.comment || "");
   const [source, setSource] = useState(song.source);

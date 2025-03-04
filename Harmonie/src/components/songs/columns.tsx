@@ -300,12 +300,12 @@ export const columns: ColumnDef<Song>[] = [
       const tags = row.getValue("tags");
       const tagList = Array.isArray(tags)
         ? tags
-        : typeof tags === "string"
+        : typeof tags === "string" && tags.length > 0
         ? tags
             .split(",")
             .map((tag) => tag.trim())
             .filter((tag) => tag.length > 0)
-        : [];
+        : ["unknown"];
 
       const displayTags = tagList.slice(0, 3);
       const remainingTags = tagList.slice(3);
