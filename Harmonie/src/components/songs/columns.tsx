@@ -60,7 +60,9 @@ const ActionCell = ({ row, table }: { row: any; table: any }) => {
         </Button>
       </div>
 
-      <Dialog open={isPlayerOpen} onOpenChange={setIsPlayerOpen}>
+      <Dialog open={isPlayerOpen} onOpenChange={(open) => {
+        setIsPlayerOpen(open);
+      }}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader className="flex flex-row items-center justify-between">
             <div className="flex items-center gap-4">

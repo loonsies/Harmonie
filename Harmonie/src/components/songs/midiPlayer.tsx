@@ -1,6 +1,4 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import * as Tone from "tone";
-import { Midi } from "@tonejs/midi";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Play, Pause, Volume2, MoreVertical, Download } from "lucide-react";
@@ -19,12 +17,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUser } from "@/contexts/UserContext";
 import { downloadSongs } from "@/utils/downloadSongs";
+import { Sequencer, Synthetizer, WORKLET_URL_ABSOLUTE, MIDI } from "spessasynth_lib";
 
 interface Track {
   name: string;
-  channel: number;
+  channel: Set<number>;
   enabled: boolean;
-  notes: any[];
+  port: number;
 }
 
 interface MidiPlayerProps {
@@ -32,13 +31,16 @@ interface MidiPlayerProps {
   download?: string;
   origin?: string;
   song?: any;
+  onClose?: () => void;
 }
 
-export function MidiPlayer({ songId, download, origin, song }: MidiPlayerProps) {
+export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [tracks, setTracks] = useState<Track[]>([]);
-  const [synth, setSynth] = useState<Tone.PolySynth | null>(null);
+  const [synth, setSynth] = useState<Synthetizer | null>(null);
+  const [sequencer, setSequencer] = useState<Sequencer | null>(null);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -53,53 +55,19 @@ export function MidiPlayer({ songId, download, origin, song }: MidiPlayerProps) 
 
   const resetPlayback = useCallback(() => {
     setIsPlaying(false);
-    Tone.Transport.stop();
-    Tone.Transport.seconds = 0;
+    if (sequencer) {
+      sequencer.pause();
+      sequencer.currentTime = 0;
+    }
     setCurrentTime(0);
     setProgress(0);
-  }, []);
+  }, [sequencer]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
-
-  const setupPlayback = useCallback(() => {
-    Tone.Transport.cancel();
-
-    // Find the latest note end time
-    let latestEndTime = 0;
-    tracks.forEach((track) => {
-      if (track.enabled && track.notes.length > 0) {
-        track.notes.forEach((note) => {
-          const noteEndTime = note.time + note.duration;
-          latestEndTime = Math.max(latestEndTime, noteEndTime);
-        });
-      }
-    });
-
-    // Schedule all notes
-    tracks.forEach((track) => {
-      if (track.enabled) {
-        track.notes.forEach((note) => {
-          Tone.Transport.schedule((time) => {
-            synth?.triggerAttackRelease(
-              note.name,
-              note.duration,
-              time,
-              note.velocity
-            );
-          }, note.time);
-        });
-      }
-    });
-
-    // Schedule the end of playback
-    Tone.Transport.schedule(() => {
-      resetPlayback();
-    }, latestEndTime);
-  }, [tracks, synth, resetPlayback]);
 
   const fetchAndCacheMidiFile = async (url: string): Promise<ArrayBuffer> => {
     // Try to get from cache first
@@ -141,20 +109,65 @@ export function MidiPlayer({ songId, download, origin, song }: MidiPlayerProps) 
       setIsLoading(true);
       try {
         const arrayBuffer = await getMidiData();
-        const midi = new Midi(arrayBuffer);
+        const midi = new MIDI(arrayBuffer);
 
-        const midiTracks = midi.tracks.map((track, index) => ({
-          name: track.name || `Track ${index + 1}`,
-          channel: track.channel,
-          enabled: true,
-          notes: track.notes,
-        }));
+        // Create tracks based on MIDI ports and used channels
+        const midiTracks = Array.from({ length: midi.tracksAmount }, (_, index) => {
+          // Get track name from MIDI data or use default
+          let trackName = `Track ${index + 1}`;
+          if (index === 0 && midi.midiName) {
+            trackName = midi.midiName;
+          } else {
+            // Try to get track name from the track's events
+            const track = midi.tracks[index];
+            if (track) {
+              for (const event of track) {
+                // Meta event for track name is 0x03
+                if (event.messageStatusByte === 0x03) {
+                  trackName = new TextDecoder().decode(event.messageData);
+                  break;
+                }
+              }
+            }
+          }
+          
+          return {
+            name: trackName,
+            channel: midi.usedChannelsOnTrack[index] || new Set(),
+            port: midi.midiPorts[index] || 0,
+            enabled: true
+          };
+        });
 
         setTracks(midiTracks);
-        setDuration(midi.duration);
 
-        const newSynth = new Tone.PolySynth().toDestination();
+        // Initialize AudioContext and SpessaSynth
+        const ctx = new AudioContext();
+        await ctx.audioWorklet.addModule(WORKLET_URL_ABSOLUTE);
+        
+        const response = await fetch('/soundfonts/default.sf2');
+        const soundFontBuffer = await response.arrayBuffer();
+        
+        const newSynth = new Synthetizer(ctx.destination, soundFontBuffer);
+        setAudioContext(ctx);
         setSynth(newSynth);
+
+        // Create initial sequencer
+        console.log("creating sequencer");
+        const newSequencer = new Sequencer(
+          [{
+            binary: arrayBuffer,
+            altName: "Current Song"
+          }], 
+          newSynth,
+          {
+            autoPlay: false,
+            skipToFirstNoteOn: false,
+            preservePlaybackState: false
+          }
+        );
+        setSequencer(newSequencer);
+        setDuration(midi.duration); // Use MIDI duration instead of sequencer duration
       } catch (error) {
         console.error("Error loading MIDI file:", error);
       }
@@ -167,33 +180,44 @@ export function MidiPlayer({ songId, download, origin, song }: MidiPlayerProps) 
       if (timeUpdateInterval.current) {
         window.clearInterval(timeUpdateInterval.current);
       }
-      Tone.Transport.stop();
-      Tone.Transport.cancel();
+      if (sequencer) {
+        sequencer.pause();
+      }
+      audioContext?.close();
     };
   }, [songId, origin, download, getMidiData]);
 
   useEffect(() => {
-    if (!isLoading && autoplayEnabled && !isPlaying && synth && firstLoad.current) {
+    if (!isLoading && autoplayEnabled && !isPlaying && synth && firstLoad.current && sequencer) {
       firstLoad.current = false;
-      const startPlayback = async () => {
-        await Tone.start();
-        Tone.Transport.start();
-        setIsPlaying(true);
-      };
-      startPlayback();
+      console.log("autoplaying");
+      sequencer.play();
+      setIsPlaying(true);
     }
-  }, [isLoading, autoplayEnabled, isPlaying, synth]);
+  }, [isLoading, autoplayEnabled, isPlaying, synth, sequencer]);
+
+  useEffect(() => {
+    if (sequencer && synth) {
+      // Apply current track states
+      tracks.forEach((track, index) => {
+        track.channel.forEach(channel => {
+          const actualChannel = channel + (track.port * 16);
+          synth.muteChannel(actualChannel, !track.enabled);
+        });
+      });
+    }
+  }, [tracks, sequencer, synth]);
 
   useEffect(() => {
     if (synth) {
-      synth.volume.value = Tone.gainToDb(volume / 100);
+      synth.setMainVolume(volume / 100)
     }
   }, [volume, synth]);
 
   useEffect(() => {
-    if (isPlaying) {
+    if (isPlaying && sequencer) {
       timeUpdateInterval.current = window.setInterval(() => {
-        const time = Tone.Transport.seconds;
+        const time = sequencer.currentTime;
 
         // Check if we've reached the end
         if (time >= duration) {
@@ -216,49 +240,52 @@ export function MidiPlayer({ songId, download, origin, song }: MidiPlayerProps) 
         window.clearInterval(timeUpdateInterval.current);
       }
     };
-  }, [isPlaying, duration, resetPlayback]);
-
-  useEffect(() => {
-    setupPlayback();
-  }, [tracks, setupPlayback]);
+  }, [isPlaying, duration, resetPlayback, sequencer]);
 
   const togglePlay = async () => {
-    if (!synth) return;
+    if (!sequencer) return;
 
     if (isPlaying) {
-      Tone.Transport.pause();
+      sequencer.pause();
       setIsPlaying(false);
     } else {
       // If we're at the end, reset to beginning
       if (currentTime >= duration) {
-        Tone.Transport.seconds = 0;
+        sequencer.currentTime = 0;
         setCurrentTime(0);
         setProgress(0);
       }
-      await Tone.start();
-      Tone.Transport.start();
+      console.log("playing");
+      sequencer.play();
       setIsPlaying(true);
     }
   };
 
   const toggleTrack = (index: number) => {
-    setTracks(
-      tracks.map((track, i) =>
-        i === index ? { ...track, enabled: !track.enabled } : track
-      )
+    const newTracks = tracks.map((track, i) =>
+      i === index ? { ...track, enabled: !track.enabled } : track
     );
+    setTracks(newTracks);
+
+    // Update sequencer channel states
+    if (sequencer && synth) {
+      const track = newTracks[index];
+      if (track) {
+        track.channel.forEach(channel => {
+          const actualChannel = channel + (track.port * 16);
+          synth.muteChannel(actualChannel, !track.enabled);
+        });
+      }
+    }
   };
 
   const handleSeek = (value: number[]) => {
+    if (!sequencer) return;
+    
     const newTime = (value[0] / 100) * duration;
-    Tone.Transport.seconds = newTime;
+    sequencer.currentTime = newTime;
     setCurrentTime(newTime);
     setProgress(value[0]);
-
-    // If we're at the end and seeking backwards, reset playback
-    if (currentTime >= duration && newTime < duration) {
-      setupPlayback();
-    }
   };
 
   const handleVolumeChange = (value: number[]) => {
@@ -266,9 +293,25 @@ export function MidiPlayer({ songId, download, origin, song }: MidiPlayerProps) 
     setVolume(newVolume);
     localStorage.setItem("midiPlayerVolume", newVolume.toString());
     if (synth) {
-      synth.volume.value = Tone.gainToDb(newVolume / 100);
+      synth.setMainVolume(volume / 100)
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (timeUpdateInterval.current) {
+        window.clearInterval(timeUpdateInterval.current);
+      }
+      if (sequencer) {
+        sequencer.pause();
+        sequencer.currentTime = 0;
+      }
+      setIsPlaying(false);
+      setCurrentTime(0);
+      setProgress(0);
+      audioContext?.close();
+    };
+  }, [sequencer]);
 
   if (isLoading) {
     return (
