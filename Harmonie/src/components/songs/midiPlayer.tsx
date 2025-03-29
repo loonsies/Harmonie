@@ -185,7 +185,7 @@ export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlay
       }
       audioContext?.close();
     };
-  }, [songId, origin, download, getMidiData]);
+  }, [songId, origin, download, getMidiData, audioContext, sequencer]);
 
   useEffect(() => {
     if (!isLoading && autoplayEnabled && !isPlaying && synth && firstLoad.current && sequencer) {
@@ -304,14 +304,10 @@ export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlay
       }
       if (sequencer) {
         sequencer.pause();
-        sequencer.currentTime = 0;
       }
-      setIsPlaying(false);
-      setCurrentTime(0);
-      setProgress(0);
       audioContext?.close();
     };
-  }, [sequencer]);
+  }, [sequencer, audioContext]);
 
   if (isLoading) {
     return (
