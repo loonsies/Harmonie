@@ -5,7 +5,7 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY ./Harmonie/package*.json ./
-RUN npm install --frozen-lockfile
+RUN npm install
 
 # Copy source code for development
 FROM base AS dev
