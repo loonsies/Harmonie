@@ -6,8 +6,8 @@ copy_defaults() {
     local dest="/app/public/$1"
     
     echo "Copying default $1 files..."
-    sudo cp -rf "$src"/* "$dest"/
     sudo chown -R nextjs:nodejs "$dest"
+    sudo cp -rf "$src"/* "$dest"/
 }
 
 # Copy defaults for each directory

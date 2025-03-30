@@ -34,9 +34,11 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Create a non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create a non-root user and install sudo
+RUN apk add --no-cache sudo && \
+    addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs && \
+    echo "nextjs ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nextjs
 
 # Create directories for mounted volumes with correct permissions
 RUN mkdir -p /app/public/synthetizer /app/midi-cache \
