@@ -88,8 +88,8 @@ const ActionCell = ({ row, table }: { row: any; table: any }) => {
                 <Download className="h-4 w-4" />
               </Button>
             </div>
-            <DialogDescription>{song.comment}</DialogDescription>
           </DialogHeader>
+          <DialogDescription>{song.comment}</DialogDescription>
           <MidiPlayer
             songId={song.id}
             download={song.download}
