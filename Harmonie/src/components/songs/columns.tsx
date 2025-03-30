@@ -14,6 +14,7 @@ import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -60,9 +61,12 @@ const ActionCell = ({ row, table }: { row: any; table: any }) => {
         </Button>
       </div>
 
-      <Dialog open={isPlayerOpen} onOpenChange={(open) => {
-        setIsPlayerOpen(open);
-      }}>
+      <Dialog
+        open={isPlayerOpen}
+        onOpenChange={(open) => {
+          setIsPlayerOpen(open);
+        }}
+      >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader className="flex flex-row items-center justify-between">
             <div className="flex items-center gap-4">
@@ -84,6 +88,7 @@ const ActionCell = ({ row, table }: { row: any; table: any }) => {
                 <Download className="h-4 w-4" />
               </Button>
             </div>
+            <DialogDescription>{song.comment}</DialogDescription>
           </DialogHeader>
           <MidiPlayer
             songId={song.id}
