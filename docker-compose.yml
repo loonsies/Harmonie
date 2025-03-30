@@ -13,10 +13,10 @@ services:
     depends_on:
       - harmonie-db
     volumes:
-      - /mnt/user/harmonie-data/public/midi:/app/public/midi
-      - /mnt/user/harmonie-data/public/icons:/app/public/icons
-      - /mnt/user/harmonie-data/public/avatar:/app/public/avatar
-      - /mnt/user/harmonie-data/public/soundfonts:/app/public/soundfonts
+      - /mnt/user/harmonie-data/midi:/app/public/midi
+      - /mnt/user/harmonie-data/icons:/app/public/icons
+      - /mnt/user/harmonie-data/avatar:/app/public/avatar
+      - /mnt/user/harmonie-data/soundfonts:/app/public/soundfonts
       - /mnt/user/harmonie-data/midi-cache:/app/midi-cache
     user: "1001:1001"
     restart: unless-stopped
