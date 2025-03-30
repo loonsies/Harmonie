@@ -19,6 +19,9 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY ./Harmonie/ .
+COPY ./Harmonie/public/avatar ./public/avatar
+COPY ./Harmonie/public/icons ./public/icons
+COPY ./Harmonie/public/soundfonts ./public/soundfonts
 # Copy worklet file for production build
 RUN mkdir -p public/synthetizer && \
     cp node_modules/spessasynth_lib/synthetizer/worklet_processor.min.js public/synthetizer/
