@@ -13,10 +13,6 @@ FROM base AS dev
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY ./Harmonie/ .
-# Copy worklet file for development
-RUN mkdir -p public/synthetizer && \
-    cp node_modules/spessasynth_lib/synthetizer/worklet_processor.min.js public/synthetizer/worklet_processor.min.js && \
-    ls -la public/synthetizer/
 
 # Build the application
 FROM base AS builder
