@@ -15,5 +15,9 @@ copy_defaults "avatar"
 copy_defaults "icons"
 copy_defaults "soundfonts"
 
+# Set permissions for midi directory
+echo "Setting permissions for midi directory..."
+sudo chown -R nextjs:nodejs /app/public/midi
+
 # Execute the main container command
 exec "$@"
