@@ -1,7 +1,14 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Play, Pause, Volume2, MoreVertical, Download } from "lucide-react";
+import {
+  Loader2,
+  Play,
+  Pause,
+  Volume2,
+  MoreVertical,
+  Download,
+} from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
   Tooltip,
@@ -17,7 +24,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUser } from "@/contexts/UserContext";
 import { downloadSongs } from "@/utils/downloadSongs";
-import { Sequencer, Synthetizer, WORKLET_URL_ABSOLUTE, MIDI } from "spessasynth_lib";
+import {
+  Sequencer,
+  Synthetizer,
+  WORKLET_URL_ABSOLUTE,
+  MIDI,
+} from "spessasynth_lib";
 
 interface Track {
   name: string;
@@ -34,7 +46,13 @@ interface MidiPlayerProps {
   onClose?: () => void;
 }
 
-export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlayerProps) {
+export function MidiPlayer({
+  songId,
+  download,
+  origin,
+  song,
+  onClose,
+}: MidiPlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -52,6 +70,9 @@ export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlay
   const timeUpdateInterval = useRef<number | null>(null);
   const firstLoad = useRef(true);
   const { autoplayEnabled, toggleAutoplay } = useUser();
+
+  // Move AudioContext creation to component level
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const resetPlayback = useCallback(() => {
     setIsPlaying(false);
@@ -111,63 +132,74 @@ export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlay
         const arrayBuffer = await getMidiData();
         const midi = new MIDI(arrayBuffer);
 
+        // Initialize AudioContext only if it doesn't exist
+        if (!audioContextRef.current) {
+          audioContextRef.current = new AudioContext();
+          await audioContextRef.current.audioWorklet.addModule(
+            WORKLET_URL_ABSOLUTE
+          );
+        }
+
+        const response = await fetch("/soundfonts/default.sf2");
+        const soundFontBuffer = await response.arrayBuffer();
+
+        const newSynth = new Synthetizer(
+          audioContextRef.current.destination,
+          soundFontBuffer
+        );
+        setAudioContext(audioContextRef.current);
+        setSynth(newSynth);
+
         // Create tracks based on MIDI ports and used channels
-        const midiTracks = Array.from({ length: midi.tracksAmount }, (_, index) => {
-          // Get track name from MIDI data or use default
-          let trackName = `Track ${index + 1}`;
-          if (index === 0 && midi.midiName) {
-            trackName = midi.midiName;
-          } else {
-            // Try to get track name from the track's events
-            const track = midi.tracks[index];
-            if (track) {
-              for (const event of track) {
-                // Meta event for track name is 0x03
-                if (event.messageStatusByte === 0x03) {
-                  trackName = new TextDecoder().decode(event.messageData);
-                  break;
+        const midiTracks = Array.from(
+          { length: midi.tracksAmount },
+          (_, index) => {
+            // Get track name from MIDI data or use default
+            let trackName = `Track ${index + 1}`;
+            if (index === 0 && midi.midiName) {
+              trackName = midi.midiName;
+            } else {
+              // Try to get track name from the track's events
+              const track = midi.tracks[index];
+              if (track) {
+                for (const event of track) {
+                  // Meta event for track name is 0x03
+                  if (event.messageStatusByte === 0x03) {
+                    trackName = new TextDecoder().decode(event.messageData);
+                    break;
+                  }
                 }
               }
             }
+
+            return {
+              name: trackName,
+              channel: midi.usedChannelsOnTrack[index] || new Set(),
+              port: midi.midiPorts[index] || 0,
+              enabled: true,
+            };
           }
-          
-          return {
-            name: trackName,
-            channel: midi.usedChannelsOnTrack[index] || new Set(),
-            port: midi.midiPorts[index] || 0,
-            enabled: true
-          };
-        });
+        );
 
         setTracks(midiTracks);
 
-        // Initialize AudioContext and SpessaSynth
-        const ctx = new AudioContext();
-        await ctx.audioWorklet.addModule(WORKLET_URL_ABSOLUTE);
-        
-        const response = await fetch('/soundfonts/default.sf2');
-        const soundFontBuffer = await response.arrayBuffer();
-        
-        const newSynth = new Synthetizer(ctx.destination, soundFontBuffer);
-        setAudioContext(ctx);
-        setSynth(newSynth);
-
         // Create initial sequencer
-        console.log("creating sequencer");
         const newSequencer = new Sequencer(
-          [{
-            binary: arrayBuffer,
-            altName: "Current Song"
-          }], 
+          [
+            {
+              binary: arrayBuffer,
+              altName: "Current Song",
+            },
+          ],
           newSynth,
           {
             autoPlay: false,
             skipToFirstNoteOn: false,
-            preservePlaybackState: false
+            preservePlaybackState: false,
           }
         );
         setSequencer(newSequencer);
-        setDuration(midi.duration); // Use MIDI duration instead of sequencer duration
+        setDuration(midi.duration);
       } catch (error) {
         console.error("Error loading MIDI file:", error);
       }
@@ -176,6 +208,7 @@ export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlay
 
     initPlayer();
 
+    // Cleanup function
     return () => {
       if (timeUpdateInterval.current) {
         window.clearInterval(timeUpdateInterval.current);
@@ -183,12 +216,36 @@ export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlay
       if (sequencer) {
         sequencer.pause();
       }
-      audioContext?.close();
+      // Don't close AudioContext here
     };
-  }, [songId, origin, download, getMidiData, audioContext, sequencer]);
+  }, [songId, origin, download, getMidiData]);
+
+  // Add separate cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      if (timeUpdateInterval.current) {
+        window.clearInterval(timeUpdateInterval.current);
+      }
+      if (sequencer) {
+        sequencer.pause();
+      }
+      // Close AudioContext only when component is unmounted
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
-    if (!isLoading && autoplayEnabled && !isPlaying && synth && firstLoad.current && sequencer) {
+    if (
+      !isLoading &&
+      autoplayEnabled &&
+      !isPlaying &&
+      synth &&
+      firstLoad.current &&
+      sequencer
+    ) {
       firstLoad.current = false;
       console.log("autoplaying");
       sequencer.play();
@@ -200,8 +257,8 @@ export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlay
     if (sequencer && synth) {
       // Apply current track states
       tracks.forEach((track, index) => {
-        track.channel.forEach(channel => {
-          const actualChannel = channel + (track.port * 16);
+        track.channel.forEach((channel) => {
+          const actualChannel = channel + track.port * 16;
           synth.muteChannel(actualChannel, !track.enabled);
         });
       });
@@ -210,7 +267,7 @@ export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlay
 
   useEffect(() => {
     if (synth) {
-      synth.setMainVolume(volume / 100)
+      synth.setMainVolume(volume / 100);
     }
   }, [volume, synth]);
 
@@ -271,8 +328,8 @@ export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlay
     if (sequencer && synth) {
       const track = newTracks[index];
       if (track) {
-        track.channel.forEach(channel => {
-          const actualChannel = channel + (track.port * 16);
+        track.channel.forEach((channel) => {
+          const actualChannel = channel + track.port * 16;
           synth.muteChannel(actualChannel, !track.enabled);
         });
       }
@@ -281,7 +338,7 @@ export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlay
 
   const handleSeek = (value: number[]) => {
     if (!sequencer) return;
-    
+
     const newTime = (value[0] / 100) * duration;
     sequencer.currentTime = newTime;
     setCurrentTime(newTime);
@@ -293,21 +350,9 @@ export function MidiPlayer({ songId, download, origin, song, onClose }: MidiPlay
     setVolume(newVolume);
     localStorage.setItem("midiPlayerVolume", newVolume.toString());
     if (synth) {
-      synth.setMainVolume(volume / 100)
+      synth.setMainVolume(volume / 100);
     }
   };
-
-  useEffect(() => {
-    return () => {
-      if (timeUpdateInterval.current) {
-        window.clearInterval(timeUpdateInterval.current);
-      }
-      if (sequencer) {
-        sequencer.pause();
-      }
-      audioContext?.close();
-    };
-  }, [sequencer, audioContext]);
 
   if (isLoading) {
     return (
