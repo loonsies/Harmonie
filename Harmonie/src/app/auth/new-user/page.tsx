@@ -30,9 +30,13 @@ export default function NewUser() {
   const { data: session, update: updateSession } = useSession();
 
   useEffect(() => {
+    if (session === undefined) return; // Still loading
+
     if (!session) {
-      router.push("/auth/login");
+      console.log('No session — redirecting to login.'); router.push("/auth/login");
+      return;
     }
+
     if (session?.user?.name) {
       router.push("/");
     }
