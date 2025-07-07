@@ -33,7 +33,7 @@ export default function NewUser() {
     if (session === undefined) return; // Still loading
 
     if (!session) {
-      console.log('No session — redirecting to login.'); router.push("/auth/login");
+      router.push("/auth/login");
       return;
     }
 
